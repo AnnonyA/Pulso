@@ -1,0 +1,90 @@
+name: Compilar IPA - iOS 26
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Config/**'
+      - 'Pulso.xcodeproj/**'
+      - 'scripts/**'
+      - 'Package.swift'
+      - 'docs/INSTALL_README.txt'
+      - '.github/workflows/ios.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulso-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    name: iPhone arm64 - sin firmar
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Elegir Xcode 26 o posterior
+        run: python3 scripts/select_xcode.py
+
+      - name: Mostrar compilador y SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          swift --version
+
+      - name: Validar configuracion
+        run: python3 scripts/validate_project.py
+
+      - name: Probar modelo de datos y exportacion
+        run: swift test --parallel
+
+      - name: Compilar y verificar IPA de iPhone
+        run: bash scripts/build_unsigned_ipa.sh
+
+      - name: Publicar archivo descargable
+        id: ipa
+        uses: actions/upload-artifact@v6
+        with:
+          name: Pulso-iOS26-unsigned-${{ github.run_number }}
+          path: |
+            dist/Pulso-unsigned.ipa
+            dist/NFC-entitlements.plist
+            dist/INSTALL_README.txt
+            dist/build-info.json
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Conservar registro de compilacion
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Pulso-build-log-${{ github.run_number }}
+          path: build/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Resumen
+        env:
+          PULSO_ARTIFACT_URL: ${{ steps.ipa.outputs.artifact-url }}
+        run: |
+          python3 - <<'PY'
+          import os
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as report:
+              report.write('## Pulso para iPhone\n\n')
+              report.write('[Descargar IPA y notas](' + os.environ['PULSO_ARTIFACT_URL'] + ')\n\n')
+              report.write('- iOS minimo: **26.0**; arquitectura: **arm64**.\n')
+              report.write('- Se verifico un ejecutable Mach-O para iPhone, sus recursos y su version minima.\n')
+              report.write('- El IPA esta **sin firmar**. Necesita firma y perfil validos con NFC TAG antes de usar el lector.\n')
+              report.write('- Esta compilacion no realiza una prueba fisica con una tarjeta SUBE.\n')
+          PY
