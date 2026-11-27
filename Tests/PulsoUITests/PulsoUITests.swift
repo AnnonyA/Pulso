@@ -24,7 +24,9 @@ final class PulsoUITests: XCTestCase {
         XCTAssertTrue(selected.waitForExistence(timeout: 5), "Expected an accessible Button with identifier mode.\(mode). See AX-on-launch.")
         let predicate = NSPredicate(format: "value == %@", "Seleccionado")
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: selected)
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed, "Unexpected accessibility value: \(String(describing: selected.value))")
+        // A hosted iOS simulator may spend several seconds fetching an AX snapshot.
+        // Keep the exact selected-value assertion, with enough time for that query.
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 15), .completed, "Unexpected accessibility value: \(String(describing: selected.value))")
         XCTAssertEqual(app.staticTexts["reader.mode.title"].label, title)
         for otherMode in ["balance", "trips", "topUp"] where otherMode != mode {
             XCTAssertEqual(app.buttons["mode.\(otherMode)"].value as? String, "No seleccionado")
@@ -81,7 +83,7 @@ final class PulsoUITests: XCTestCase {
         assertPrimaryContentVisible(in: app)
         capture("03-acreditar-carga-light")
 
-        // Exercise the real readingAvailable guard; no fake NFC environment.
+        // Exercise the compiled simulator branch; no fake NFC environment.
         let scan = app.buttons["reader.scan"]
         XCTAssertTrue(scan.isEnabled)
         scan.tap()
@@ -93,6 +95,25 @@ final class PulsoUITests: XCTestCase {
             NSPredicate(format: "label CONTAINS %@", "El chip sí fue detectado")
         ).firstMatch.exists)
         capture("03b-real-nfc-unavailable-simulator")
+
+        // A failed attempt must still offer a diagnostic: no card record exists.
+        let diagnostics = app.buttons["reader.diagnostics"]
+        XCTAssertTrue(diagnostics.waitForExistence(timeout: 5))
+        if !diagnostics.isHittable { app.swipeUp() }
+        XCTAssertTrue(diagnostics.isHittable)
+        diagnostics.tap()
+        let shareDiagnostic = app.buttons["nfc.diagnostics.share"]
+        XCTAssertTrue(shareDiagnostic.waitForExistence(timeout: 5))
+        XCTAssertTrue(shareDiagnostic.isEnabled)
+        let environment = app.descendants(matching: .any).matching(identifier: "nfc.diagnostics.environment").firstMatch
+        XCTAssertTrue(environment.exists)
+        XCTAssertTrue(environment.label.localizedCaseInsensitiveContains("simulador"))
+        app.buttons["nfc.diagnostics.refresh"].tap()
+        XCTAssertTrue(shareDiagnostic.isEnabled)
+        capture("03c-nfc-diagnostics-without-card")
+        app.buttons["utility.close"].tap()
+        // Return to the selectors if making the error action visible scrolled.
+        if !balance.isHittable { app.swipeDown() }
 
         // Choosing another operation clears this recoverable error.
         balance.tap()
@@ -111,6 +132,7 @@ final class PulsoUITests: XCTestCase {
 
         app.buttons["menu.open"].tap()
         XCTAssertTrue(app.buttons["menu.readings"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["menu.nfcDiagnostics"].exists)
         XCTAssertTrue(app.buttons["menu.settings"].exists)
         XCTAssertTrue(app.buttons["menu.help"].exists)
     }

@@ -6,15 +6,19 @@ El proyecto usa Swift 6, SwiftUI y Core NFC. No requiere backend ni dependencias
 
 [![Compilar IPA - iOS 26](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml/badge.svg)](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml)
 
-## Descargar Pulso 0.2.0
+## Corrección NFC — versión 0.2.1
 
-El [artifact de la versión 0.2.0, build 2](https://github.com/AnnonyA/Pulso/actions/runs/45979462687/artifacts/15188069496) contiene **Pulso-unsigned.ipa** y las notas de instalación. Es una app arm64 compilada para iPhone, con **iOS 26.0 como mínimo**. No hace falta compilar en Windows.
+La versión **0.2.1, build 3**, corrige el mensaje que identificaba erróneamente como simulador un iPhone físico cuando Core NFC informaba que la lectura no estaba disponible. El entorno de simulador se distingue mediante la condición de compilación de Swift; el resultado de disponibilidad se trata por separado y no se usa para adivinar una causa de firma.
+
+**Menú → Diagnóstico NFC** permite revisar y compartir el estado de esta instalación sin haber detectado una tarjeta. Incluye versión/build, entorno, sistema, disponibilidad y último error cuando existe. También se puede abrir desde un fallo de lectura. Actualizar el estado no inicia una sesión NFC y conserva el último error para analizar el intento anterior.
+
+El workflow de [GitHub Actions](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml) genera **Pulso-unsigned.ipa** para dispositivo arm64, con **iOS 26.0 como mínimo**. Las notas de [validación](docs/VALIDATION.md) registran la ejecución exacta de cada entrega. No hace falta compilar en Windows.
 
 El IPA está **sin firmar**: para usar NFC, la firma y el perfil de instalación deben permitir la capacidad NFC TAG. El paquete no incluye certificados ni credenciales de Apple.
 
 **Esta versión detecta únicamente los metadatos públicos de tarjetas compatibles con Core NFC. No consulta el saldo real, no obtiene viajes protegidos y no acredita cargas.** Los tres modos explican estos límites; no hay resultados simulados. Ver [compatibilidad y alcance NFC](docs/NFC_COMPATIBILITY.md).
 
-## Interfaz de tres modos — versión 0.2.0
+## Interfaz de tres modos
 
 La pantalla principal sigue la referencia visual de SUBE: encabezado azul, tres selectores circulares, tarjeta junto al iPhone e indicación **Apoyá la SUBE**.
 
@@ -30,7 +34,7 @@ Las capturas de revisión se obtienen de la app nativa mediante XCTest en un sim
 
 ### Capturas nativas en iPhone 11
 
-Estas imágenes provienen de la ejecución correcta #6, en un simulador **iPhone 11 con iOS 26.5**. Se copiaron los PNG originales de XCTest sin editar sus píxeles.
+Estas imágenes documentan el diseño de **0.2.0**, obtenido en la ejecución correcta #6 en un simulador **iPhone 11 con iOS 26.5**. El diseño principal se conserva en 0.2.1; las capturas anteriores no se presentan como prueba de la corrección NFC. Se copiaron los PNG originales de XCTest sin editar sus píxeles.
 
 | Consultar saldo — predeterminado | Historial | Acreditar carga |
 | --- | --- | --- |
@@ -66,6 +70,7 @@ El script inicia sesión con GitHub si hace falta, crea un **repositorio privado
 - Sesión NFC real mediante `NFCTagReaderSession`, con manejo de cancelación, espera agotada, varias tarjetas y errores.
 - Datos públicos que iOS exponga: tecnología, familia MIFARE, identificador del chip y metadatos disponibles.
 - Resultado asociado al modo que inició el escaneo, con estado claro y exportación de diagnóstico.
+- Diagnóstico del entorno y de la disponibilidad NFC accesible sin tarjeta, con actualización y exportación explícita.
 - Historial local opcional de hasta 50 lecturas, con eliminación.
 - Ajustes, privacidad, ayuda, tema claro/oscuro y accesibilidad.
 - Ícono propio y configuración de NFC, privacidad y despliegue.
@@ -99,6 +104,10 @@ docs/BUILD.md            Guía para Windows y firma
 ```
 
 ## Estado de validación
+
+La corrección **0.2.1** incorpora regresiones para distinguir un dispositivo con NFC no disponible de un simulador, conservar el error original y ofrecer un diagnóstico sin tarjeta. Su compilación y sus resultados se documentarán con la ejecución correspondiente; las comprobaciones de 0.2.0 no validan automáticamente el cambio.
+
+### Antecedente: 0.2.0
 
 La [ejecución #6](https://github.com/AnnonyA/Pulso/actions/runs/45979462687) terminó correctamente para **0.2.0, build 2**. Pasaron las **13 pruebas de dominio**, los **3 escenarios nativos de interfaz** en iPhone 11 —claro, oscuro y texto grande— y la verificación del IPA real: Mach-O arm64, plataforma iPhoneOS, mínimo iOS 26.0, recursos compilados y privacidad.
 

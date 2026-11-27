@@ -1,6 +1,18 @@
-# Estado de la entrega: Pulso 0.2.0
+# Estado de la entrega: Pulso
 
 Actualizado el 27 de noviembre de 2026.
+
+## Corrección 0.2.1, build 3
+
+Un usuario instaló la app en un iPhone 11 físico y recibió un aviso de simulador. El código de 0.2.0 utilizaba `readingAvailable == false` para elegir ese mensaje en `ReaderStore.startScan` y mantenía una segunda explicación ambigua en `NFCReader.begin`. La disponibilidad NFC no identifica el entorno de ejecución.
+
+La corrección separa entorno compilado, disponibilidad y errores de sesión, y agrega un diagnóstico compartible incluso sin tarjeta. No se atribuye el estado negativo automáticamente a la firma ni se intenta forzar una sesión cuando Core NFC no la ofrece.
+
+**Validación de 0.2.1 pendiente de su ejecución de CI.** Se agregan regresiones del diagnóstico y comprobación de acceso a la pantalla de diagnóstico después de un intento sin tarjeta. El informe de la ejecución correcta, el nuevo IPA y sus huellas se incorporarán al completar esas comprobaciones.
+
+La lectura de la SUBE física y la autorización NFC de la instalación del usuario aún necesitan comprobarse. El síntoma reportado permite confirmar el mensaje erróneo; no permite determinar por sí solo la causa de indisponibilidad.
+
+## Entrega anterior: 0.2.0, build 2
 
 **La ejecución #6 terminó correctamente: pasaron las 13 pruebas de dominio y los tres escenarios de interfaz nativa. El IPA de la versión 0.2.0, build 2, está compilado y verificado.** La instalación firmada y la lectura de una SUBE física siguen pendientes.
 
