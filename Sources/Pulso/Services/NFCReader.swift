@@ -4,6 +4,7 @@ import Foundation
 enum NFCReaderEvent: Sendable {
     case phase(ScanPhase)
     case record(ScanRecord)
+    case diagnostic(NFCDiagnostic)
 }
 
 /// All mutable state and Core NFC objects are confined to `queue`.
@@ -18,7 +19,13 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
     // Queue-confined state. Do not access directly from views or ReaderStore.
     private var session: NFCTagReaderSession?
     private var requestID: UUID?
-    private var pendingRequestID: UUID?
+    private struct RequestContext: Sendable {
+        let id: UUID
+        let mode: ReaderMode
+        let deviceType: String
+    }
+    private var pendingRequest: RequestContext?
+    private var diagnostic: NFCDiagnostic?
     private var isFinishing = false
     private var isConnecting = false
     private var retryScheduled = false
@@ -29,40 +36,77 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         super.init()
     }
 
-    func start(requestID: UUID) {
+    /// Uses only public availability APIs. This never creates a reader session,
+    /// parses signing files, or obtains device/card identifiers.
+    static func captureDiagnostic(
+        deviceType: String,
+        requestedMode: ReaderMode? = nil,
+        stage: NFCDiagnosticStage = .availabilityCheck
+    ) -> NFCDiagnostic {
+        let usage = Bundle.main.object(forInfoDictionaryKey: "NFCReaderUsageDescription") as? String
+        return NFCDiagnostic(
+            capturedAt: Date(),
+            environment: .current,
+            appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Desconocida",
+            appBuild: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Desconocido",
+            bundleIdentifier: Bundle.main.bundleIdentifier ?? "Desconocido",
+            osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+            deviceType: deviceType,
+            tagReadingAvailable: NFCTagReaderSession.readingAvailable,
+            ndefReadingAvailable: NFCNDEFReaderSession.readingAvailable,
+            usageDescriptionPresent: !(usage?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true),
+            requestedMode: requestedMode,
+            stage: stage,
+            lastFailure: nil
+        )
+    }
+
+    func start(requestID: UUID, mode: ReaderMode, deviceType: String) {
+        let request = RequestContext(id: requestID, mode: mode, deviceType: deviceType)
         queue.async { [self] in
             if session != nil {
                 if isFinishing {
                     // A successful read may still be dismissing the system sheet.
                     // Wait for didInvalidate before opening another reader session.
-                    pendingRequestID = requestID
+                    pendingRequest = request
                 } else {
-                    emit(.phase(.failed("Ya hay una lectura en curso. Cerrala antes de empezar otra.")), for: requestID)
+                    var snapshot = Self.captureDiagnostic(deviceType: deviceType, requestedMode: mode, stage: .preflight)
+                    snapshot.lastFailure = NFCFailureSnapshot(category: .systemBusy, stage: .preflight, requestedMode: mode)
+                    emit(.diagnostic(snapshot), for: requestID)
+                    emit(.phase(.failed(NFCFailureCategory.systemBusy.message)), for: requestID)
                 }
                 return
             }
-            begin(requestID: requestID)
+            begin(request)
         }
     }
 
     func cancel(requestID: UUID) {
         queue.async { [self] in
-            if pendingRequestID == requestID {
-                pendingRequestID = nil
+            if pendingRequest?.id == requestID {
+                pendingRequest = nil
                 emit(.phase(.cancelled), for: requestID)
                 return
             }
             guard self.requestID == requestID, let session, !isFinishing else { return }
             isFinishing = true
+            publishDiagnostic(stage: .cancelled, for: requestID)
             emit(.phase(.cancelled), for: requestID)
             session.invalidate()
         }
     }
 
-    private func begin(requestID: UUID) {
+    private func begin(_ request: RequestContext) {
         dispatchPrecondition(condition: .onQueue(queue))
-        guard NFCTagReaderSession.readingAvailable else {
-            emit(.phase(.failed("NFC no está disponible. Usá un iPhone físico compatible; el simulador no puede leer tarjetas.")), for: requestID)
+        let requestID = request.id
+        // Re-evaluate on every attempt, including requests queued while the
+        // preceding iOS sheet was being dismissed. No cached availability flag.
+        diagnostic = Self.captureDiagnostic(deviceType: request.deviceType, requestedMode: request.mode, stage: .preflight)
+        guard let snapshot = diagnostic else { return }
+        if let failureCategory = snapshot.readiness.failureCategory {
+            let failure = NFCFailureSnapshot(category: failureCategory, stage: .preflight)
+            publishDiagnostic(stage: .failed, failure: failure, for: requestID)
+            emit(.phase(.failed(failure.message)), for: requestID)
             return
         }
 
@@ -71,6 +115,7 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         isConnecting = false
         retryScheduled = false
         connectionFailures = 0
+        publishDiagnostic(stage: .sessionCreation, for: requestID)
 
         // This iOS 13+ initializer is supported by the minimum iOS 26 SDK.
         // No guessed ISO7816 AIDs, raw frames, authentication, or writes.
@@ -80,11 +125,14 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
             queue: queue
         ) else {
             self.requestID = nil
-            emit(.phase(.failed("No se pudo crear la sesión NFC en este iPhone.")), for: requestID)
+            let failure = NFCFailureSnapshot(category: .sessionCreation, stage: .sessionCreation)
+            publishDiagnostic(stage: .failed, failure: failure, for: requestID)
+            emit(.phase(.failed(failure.message)), for: requestID)
             return
         }
         session = newSession
         newSession.alertMessage = "Acercá una sola SUBE a la parte superior trasera del iPhone y mantenela quieta."
+        publishDiagnostic(stage: .starting, for: requestID)
         emit(.phase(.scanning), for: requestID)
         newSession.begin()
     }
@@ -92,6 +140,7 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
     func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
         dispatchPrecondition(condition: .onQueue(queue))
         guard self.session === session, !isFinishing, let requestID else { return }
+        publishDiagnostic(stage: .active, for: requestID)
         emit(.phase(.scanning), for: requestID)
     }
 
@@ -106,6 +155,7 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         }
 
         isConnecting = true
+        publishDiagnostic(stage: .connecting, for: requestID)
         emit(.phase(.connecting), for: requestID)
         session.alertMessage = "Tarjeta encontrada. Mantenela quieta un momento."
         session.connect(to: tag) { [weak self] error in
@@ -120,27 +170,30 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
 
             if let error {
                 self.connectionFailures += 1
-                if let nfcError = error as? NFCReaderError,
-                   nfcError.code == .readerErrorSecurityViolation || nfcError.code == .readerErrorUnsupportedFeature {
-                    self.fail(self.message(for: error), session: currentSession, requestID: requestID)
-                } else if self.connectionFailures < 3 {
+                let failure = Self.failure(for: error, stage: .connecting)
+                self.publishDiagnostic(stage: .connecting, failure: failure, for: requestID)
+                let canRetry = failure.category == .connectionLost || failure.category == .unknown
+                if canRetry && self.connectionFailures < 3 {
                     self.scheduleRetry(message: "Se perdió el contacto. Retirá la tarjeta y volvé a apoyarla arriba, detrás del iPhone.")
                 } else {
-                    self.fail("No pudimos mantener la conexión. Quitá la funda, separá otras tarjetas e intentá de nuevo. Algunas SUBE no son compatibles con Core NFC.", session: currentSession, requestID: requestID)
+                    self.fail(failure, session: currentSession, requestID: requestID)
                 }
                 return
             }
 
             guard let connectedTag = currentSession.connectedTag else {
-                self.fail("Se perdió el contacto antes de terminar. Mantené la tarjeta junto al borde superior del iPhone y volvé a intentar.", session: currentSession, requestID: requestID)
+                self.fail(NFCFailureSnapshot(category: .connectionLost, stage: .connecting), session: currentSession, requestID: requestID)
                 return
             }
+            self.publishDiagnostic(stage: .readingMetadata, for: requestID)
             guard let record = self.makeRecord(from: connectedTag) else {
-                self.fail("iOS encontró una tarjeta, pero no expone sus metadatos mediante este lector.", session: currentSession, requestID: requestID)
+                self.fail(NFCFailureSnapshot(category: .metadataUnavailable, stage: .readingMetadata), session: currentSession, requestID: requestID)
                 return
             }
 
             self.isFinishing = true
+            self.diagnostic?.lastFailure = nil
+            self.publishDiagnostic(stage: .metadataRead, for: requestID)
             self.emit(.record(record), for: requestID)
             currentSession.alertMessage = "Tarjeta detectada. El saldo, los viajes y la acreditación no están disponibles en esta versión."
             currentSession.invalidate()
@@ -159,17 +212,19 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         isFinishing = false
 
         if !alreadyFinished, let oldRequestID {
-            if let nfcError = error as? NFCReaderError,
-               nfcError.code == .readerSessionInvalidationErrorUserCanceled {
+            let failure = Self.failure(for: error, stage: diagnostic?.stage ?? .starting)
+            if failure.category == .cancelled {
+                publishDiagnostic(stage: .cancelled, failure: failure, for: oldRequestID)
                 emit(.phase(.cancelled), for: oldRequestID)
             } else {
-                emit(.phase(.failed(message(for: error))), for: oldRequestID)
+                publishDiagnostic(stage: .failed, failure: failure, for: oldRequestID)
+                emit(.phase(.failed(failure.message)), for: oldRequestID)
             }
         }
 
-        if let pendingRequestID {
-            self.pendingRequestID = nil
-            begin(requestID: pendingRequestID)
+        if let pendingRequest {
+            self.pendingRequest = nil
+            begin(pendingRequest)
         }
     }
 
@@ -178,6 +233,7 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         guard let session, let requestID, !isFinishing, !retryScheduled else { return }
         retryScheduled = true
         session.alertMessage = message
+        publishDiagnostic(stage: .active, for: requestID)
         emit(.phase(.scanning), for: requestID)
         queue.asyncAfter(deadline: .now() + .milliseconds(750)) { [weak self] in
             guard let self, self.requestID == requestID, !self.isFinishing,
@@ -188,11 +244,36 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         }
     }
 
-    private func fail(_ message: String, session: NFCTagReaderSession, requestID: UUID) {
+    private func fail(_ failure: NFCFailureSnapshot, session: NFCTagReaderSession, requestID: UUID) {
         dispatchPrecondition(condition: .onQueue(queue))
         isFinishing = true
-        emit(.phase(.failed(message)), for: requestID)
-        session.invalidate(errorMessage: message)
+        let cancelled = failure.category == .cancelled
+        publishDiagnostic(stage: cancelled ? .cancelled : .failed, failure: failure, for: requestID)
+        emit(.phase(cancelled ? .cancelled : .failed(failure.message)), for: requestID)
+        if cancelled {
+            session.invalidate()
+        } else {
+            session.invalidate(errorMessage: failure.message)
+        }
+    }
+
+    private func publishDiagnostic(
+        stage: NFCDiagnosticStage,
+        failure: NFCFailureSnapshot? = nil,
+        for requestID: UUID
+    ) {
+        dispatchPrecondition(condition: .onQueue(queue))
+        guard var snapshot = diagnostic else { return }
+        snapshot.capturedAt = Date()
+        snapshot.stage = stage
+        if var failure = failure {
+            failure.requestedMode = snapshot.requestedMode
+            snapshot.lastFailure = failure
+        }
+        diagnostic = snapshot
+        // Always precedes the terminal phase/record event; ReaderStore still
+        // owns the same request UUID when this immutable snapshot arrives.
+        emit(.diagnostic(snapshot), for: requestID)
     }
 
     private func emit(_ event: NFCReaderEvent, for requestID: UUID) {
@@ -258,29 +339,33 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         return hex(data)
     }
 
-    private func message(for error: Error) -> String {
-        guard let nfcError = error as? NFCReaderError else {
-            return "No se pudo completar la lectura. Retirá la tarjeta y volvé a intentarlo."
+    private static func failure(for error: Error, stage: NFCDiagnosticStage) -> NFCFailureSnapshot {
+        let nsError = error as NSError
+        var category: NFCFailureCategory?
+        // Core NFC's numeric error values are meaningful only in its domain.
+        if nsError.domain == NFCErrorDomain, let nfcError = error as? NFCReaderError {
+            switch nfcError.code {
+            case .readerSessionInvalidationErrorSessionTimeout: category = .timeout
+            case .readerSessionInvalidationErrorSystemIsBusy: category = .systemBusy
+            case .readerErrorSecurityViolation: category = .securityViolation
+            case .readerErrorUnsupportedFeature: category = .unsupportedFeature
+            case .readerErrorRadioDisabled: category = .radioDisabled
+            case .readerErrorAccessNotAccepted: category = .accessNotAccepted
+            case .readerErrorIneligible: category = .ineligible
+            case .readerSessionInvalidationErrorSessionTerminatedUnexpectedly: category = .sessionInterrupted
+            case .readerTransceiveErrorTagConnectionLost, .readerTransceiveErrorTagNotConnected: category = .connectionLost
+            case .readerTransceiveErrorSessionInvalidated: category = .sessionInvalidated
+            case .readerSessionInvalidationErrorUserCanceled: category = .cancelled
+            default: category = .unknown
+            }
         }
-        switch nfcError.code {
-        case .readerSessionInvalidationErrorSessionTimeout:
-            return "Se terminó el tiempo de lectura. Acercá una sola tarjeta a la parte superior trasera del iPhone. Si no aparece, puede usar un protocolo que iOS no admite."
-        case .readerSessionInvalidationErrorSystemIsBusy:
-            return "El lector NFC está ocupado. Cerrá otras lecturas o Wallet y volvé a intentarlo."
-        case .readerErrorSecurityViolation:
-            return "La instalación no tiene autorización NFC válida. La firma y el perfil deben incluir la capacidad de lectura NFC."
-        case .readerErrorUnsupportedFeature:
-            return "Esta función NFC no está disponible en este dispositivo o en esta instalación."
-        case .readerErrorRadioDisabled:
-            return "iOS informó que la radio NFC no está disponible. Reiniciá el iPhone si el problema continúa."
-        case .readerSessionInvalidationErrorSessionTerminatedUnexpectedly:
-            return "iOS interrumpió la lectura. Mantené Pulso abierto y desbloqueado e intentá nuevamente."
-        case .readerTransceiveErrorTagConnectionLost:
-            return "Se perdió el contacto con la tarjeta. Mantenela quieta junto al borde superior del iPhone."
-        case .readerTransceiveErrorSessionInvalidated:
-            return "La sesión terminó. Iniciá una nueva lectura."
-        default:
-            return "No se pudo leer esta tarjeta (código NFC \(nfcError.code.rawValue)). Probá otra posición o una tarjeta compatible."
-        }
+        return NFCFailureSnapshot.systemError(
+            domain: nsError.domain,
+            code: nsError.code,
+            description: nsError.localizedDescription,
+            expectedNFCDomain: NFCErrorDomain,
+            nfcCategory: category,
+            stage: stage
+        )
     }
 }

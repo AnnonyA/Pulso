@@ -102,7 +102,7 @@ jobs:
               report.write('[Descargar IPA y notas](' + os.environ['PULSO_ARTIFACT_URL'] + ')\n\n')
               report.write('- iOS minimo: **26.0**; arquitectura: **arm64**.\n')
               report.write('- Se verifico un ejecutable Mach-O para iPhone, sus recursos y su version minima.\n')
-              report.write('- La UI se probo en un simulador **iPhone 11 / iOS 26**, con modos, reinicio, tema oscuro y texto grande.\n')
+              report.write('- La UI se probo en un simulador **iPhone 11 / iOS 26**, con modos, diagnostico NFC sin tarjeta, reinicio, tema oscuro y texto grande.\n')
               report.write('- Las capturas y los resultados XCTest estan en el artifact **Pulso-iPhone11-UI** de esta ejecucion.\n')
               report.write('- El IPA esta **sin firmar**. Necesita firma y perfil validos con NFC TAG antes de usar el lector.\n')
               report.write('- Esta compilacion no realiza una prueba fisica con una tarjeta SUBE.\n')

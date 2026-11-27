@@ -31,7 +31,12 @@ struct HelpView: View {
                     Divider()
                     HelpItem(
                         title: "La app abre, pero NFC da error",
-                        text: "La app necesita un iPhone físico compatible y una firma con la capacidad de lectura NFC. Si al instalar se perdió ese permiso, abrir la app no alcanza para usar el lector. Cerrá otras sesiones NFC antes de reintentar."
+                        text: "Abrí Diagnóstico NFC desde el menú o desde el mensaje de error. Funciona aunque no hayas detectado una tarjeta. La disponibilidad que informa iOS no identifica un simulador ni revela por sí sola la causa del fallo. Si instalaste un IPA, comprobá también que su firma y perfil permitan NFC TAG."
+                    )
+                    Divider()
+                    HelpItem(
+                        title: "¿Cómo sé qué está fallando?",
+                        text: "El diagnóstico distingue la compilación de dispositivo de la de simulador, muestra la versión de Pulso y conserva el último error de iOS. Actualizar estado no inicia una lectura ni borra ese último error. Si iOS informa radio NFC deshabilitada, revisá si el modo avión está activo; si informa sistema ocupado, esperá y volvé a intentar."
                     )
                     Divider()
                     HelpItem(
@@ -63,7 +68,7 @@ struct HelpView: View {
 
                 InfoNotice(
                     title: "El diagnóstico ayuda a avanzar",
-                    message: "Después de una lectura, abrí Información técnica o compartí el JSON sin UID. Así podés comprobar qué familia y qué datos expuso iOS.",
+                    message: "Si el lector no llega a abrirse, usá Menú → Diagnóstico NFC → Compartir diagnóstico. Después de detectar una tarjeta, Ver datos del chip ofrece por separado los metadatos de esa lectura.",
                     systemImage: "doc.text"
                 )
             }

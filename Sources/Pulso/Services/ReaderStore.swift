@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import CoreNFC
 import UIKit
 
 /// UI state is exclusively MainActor-isolated. Core NFC objects stay in NFCReader.
@@ -13,6 +12,8 @@ final class ReaderStore {
     private(set) var historyNotice: String?
     private(set) var selectedMode: ReaderMode = .defaultMode
     private(set) var currentResult: ModeScanResult?
+    /// In-memory installation/session evidence, available without a card scan.
+    private(set) var nfcDiagnostic: NFCDiagnostic?
 
     var keepHistory: Bool {
         didSet {
@@ -33,8 +34,6 @@ final class ReaderStore {
     var hapticsEnabled: Bool {
         didSet { defaults.set(hapticsEnabled, forKey: Keys.hapticsEnabled) }
     }
-
-    var isNFCAvailable: Bool { NFCTagReaderSession.readingAvailable }
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let historyURL: URL?
@@ -73,11 +72,8 @@ final class ReaderStore {
     func startScan() {
         guard !phase.isActive else { return }
         currentResult = nil
-        guard isNFCAvailable else {
-            phase = .failed("Para leer tu tarjeta necesitás un iPhone físico con NFC. El simulador permite recorrer la app, pero no escanear.")
-            return
-        }
-
+        // NFCReader owns the single preflight policy. Availability is not a
+        // simulator detector and is checked afresh on its serial session queue.
         if reader == nil {
             reader = NFCReader { [weak self] requestID, event in
                 self?.receive(event, for: requestID)
@@ -86,13 +82,35 @@ final class ReaderStore {
         let request = ScanRequest(mode: selectedMode)
         activeRequest = request
         phase = .scanning
-        reader?.start(requestID: request.id)
+        reader?.start(requestID: request.id, mode: request.mode, deviceType: UIDevice.current.model)
+    }
+
+    /// Does not scan, open an iOS reader sheet, or clear the last error.
+    func refreshNFCDiagnostic() {
+        guard !phase.isActive else { return }
+        nfcDiagnostic = NFCReader.captureDiagnostic(
+            deviceType: UIDevice.current.model,
+            requestedMode: selectedMode
+        ).preservingFailure(from: nfcDiagnostic)
     }
 
     /// Also called when the app actually enters the background, never merely
     /// when it becomes inactive while presenting Apple's NFC system sheet.
     func cancelScan() {
         guard let request = activeRequest else { return }
+        var snapshot = nfcDiagnostic ?? NFCReader.captureDiagnostic(
+            deviceType: UIDevice.current.model,
+            requestedMode: request.mode
+        )
+        snapshot.requestedMode = request.mode
+        snapshot.lastFailure = NFCFailureSnapshot(
+            category: .cancelled,
+            stage: snapshot.stage,
+            requestedMode: request.mode
+        )
+        snapshot.stage = .cancelled
+        snapshot.capturedAt = Date()
+        nfcDiagnostic = snapshot
         activeRequest = nil
         phase = .cancelled
         reader?.cancel(requestID: request.id)
@@ -128,6 +146,8 @@ final class ReaderStore {
     private func receive(_ event: NFCReaderEvent, for requestID: UUID) {
         guard let request = activeRequest, request.id == requestID else { return }
         switch event {
+        case .diagnostic(let diagnostic):
+            nfcDiagnostic = diagnostic
         case .phase(let phase):
             self.phase = phase
             if !phase.isActive {

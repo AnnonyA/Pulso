@@ -61,6 +61,11 @@ struct SettingsView: View {
 
             Section {
                 NavigationLink {
+                    NFCDiagnosticsView()
+                } label: {
+                    Label("Diagnóstico NFC", systemImage: "stethoscope")
+                }
+                NavigationLink {
                     HelpView()
                 } label: {
                     Label("Cómo leer tu tarjeta", systemImage: "questionmark.circle")

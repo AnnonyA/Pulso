@@ -154,6 +154,13 @@ struct DashboardView: View {
             .accessibilityIdentifier("menu.readings")
 
             Button {
+                utilityRoute = .diagnostics
+            } label: {
+                Label("Diagnóstico NFC", systemImage: "stethoscope")
+            }
+            .accessibilityIdentifier("menu.nfcDiagnostics")
+
+            Button {
                 utilityRoute = .settings
             } label: {
                 Label("Ajustes y privacidad", systemImage: "slider.horizontal.3")
@@ -225,12 +232,23 @@ struct DashboardView: View {
             }
             .padding(.bottom, 16)
         case .failed(let message):
-            InfoNotice(
-                title: "No se pudo completar la lectura",
-                message: message,
-                systemImage: "exclamationmark.circle",
-                tint: PulsoTheme.caution
-            )
+            VStack(alignment: .leading, spacing: 12) {
+                InfoNotice(
+                    title: "No se pudo completar la lectura",
+                    message: message,
+                    systemImage: "exclamationmark.circle",
+                    tint: PulsoTheme.caution
+                )
+                Button {
+                    utilityRoute = .diagnostics
+                } label: {
+                    Label("Ver diagnóstico NFC", systemImage: "stethoscope")
+                        .frame(minHeight: 44)
+                }
+                .buttonStyle(.bordered)
+                .tint(PulsoTheme.accent)
+                .accessibilityIdentifier("reader.diagnostics")
+            }
             .pulsoSurface(padding: 16)
             .padding(.bottom, 16)
         case .cancelled:
@@ -364,7 +382,7 @@ private struct OperationResultView: View {
 }
 
 private enum UtilityRoute: String, Identifiable {
-    case readings, settings, help
+    case readings, diagnostics, settings, help
     var id: String { rawValue }
 }
 
@@ -377,6 +395,7 @@ private struct UtilitySheet: View {
             Group {
                 switch route {
                 case .readings: HistoryView()
+                case .diagnostics: NFCDiagnosticsView()
                 case .settings: SettingsView()
                 case .help: HelpView()
                 }
@@ -384,6 +403,7 @@ private struct UtilitySheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Listo") { dismiss() }
+                        .accessibilityIdentifier("utility.close")
                 }
             }
         }

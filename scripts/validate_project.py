@@ -40,7 +40,7 @@ def main() -> int:
     require('SWIFT_VERSION = 6.0;' in project, "Swift 6 language mode is required.")
     require('SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor' not in project, "Core NFC isolation is explicit; do not assume global MainActor.")
     require('TARGETED_DEVICE_FAMILY = 1;' in project, "Target must be iPhone.")
-    require('MARKETING_VERSION = 0.2.0;' in project and 'CURRENT_PROJECT_VERSION = 2;' in project, "Release must be version 0.2.0, build 2.")
+    require('MARKETING_VERSION = 0.2.1;' in project and 'CURRENT_PROJECT_VERSION = 3;' in project, "Release must be version 0.2.1, build 3.")
     require('path = Sources/Pulso;' in project and 'PBXFileSystemSynchronizedRootGroup' in project, "Source membership must include the synchronized source tree.")
     scheme = ET.parse(ROOT / "Pulso.xcodeproj/xcshareddata/xcschemes/Pulso.xcscheme")
     references = scheme.findall(".//BuildableReference")
