@@ -204,11 +204,16 @@ def main() -> int:
         write_json(ARTIFACTS / "simulator-info.json", report["simulator"])
         command(["xcrun", "simctl", "status_bar", device_id, "override", "--time", "9:41", "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3", "--batteryState", "charged", "--batteryLevel", "100"], required=False)
         for scenario, appearance, text_size, method, minimum_screenshots in SCENARIOS:
-            command(["xcrun", "simctl", "ui", device_id, "appearance", appearance])
-            command(["xcrun", "simctl", "ui", device_id, "content_size", text_size])
-            result = {"name": scenario, "appearance": appearance, "contentSize": text_size, "test": method, "status": "running"}
+            result = {"name": scenario, "appearance": appearance, "contentSize": text_size, "test": method, "status": "configuring", "configurationTimeoutSeconds": 180}
             report["scenarios"].append(result)
             try:
+                configuration_started = time.monotonic()
+                # A measured CI transition back from dark mode exceeded 60s.
+                # Bound each native configuration command and preserve its log.
+                command(["xcrun", "simctl", "ui", device_id, "appearance", appearance], timeout=180, log=ARTIFACTS / "logs" / f"{scenario}-appearance.log")
+                command(["xcrun", "simctl", "ui", device_id, "content_size", text_size], timeout=180, log=ARTIFACTS / "logs" / f"{scenario}-content-size.log")
+                result["configurationDurationSeconds"] = round(time.monotonic() - configuration_started, 2)
+                result["status"] = "running"
                 command(base + [
                     "-only-testing:PulsoUITests/PulsoUITests/" + method,
                     "-resultBundlePath", str(RESULTS / f"{scenario}.xcresult"),
@@ -216,7 +221,9 @@ def main() -> int:
                     "-maximum-test-execution-time-allowance", "180", "test-without-building",
                 ], timeout=420, log=ARTIFACTS / "logs" / f"{scenario}-tests.log")
                 result["status"] = "passed"
-            except RuntimeError:
+            except RuntimeError as error:
+                result["failedPhase"] = "configuration" if result["status"] == "configuring" else "test"
+                result["error"] = str(error)
                 result["status"] = "failed"
                 raise
             finally:
