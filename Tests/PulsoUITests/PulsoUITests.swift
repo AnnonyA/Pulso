@@ -24,7 +24,9 @@ final class PulsoUITests: XCTestCase {
         XCTAssertTrue(selected.waitForExistence(timeout: 5), "Expected an accessible Button with identifier mode.\(mode). See AX-on-launch.")
         let predicate = NSPredicate(format: "value == %@", "Seleccionado")
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: selected)
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed, "Unexpected accessibility value: \(String(describing: selected.value))")
+        // A hosted iOS simulator may spend several seconds fetching an AX snapshot.
+        // Keep the exact selected-value assertion, with enough time for that query.
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 15), .completed, "Unexpected accessibility value: \(String(describing: selected.value))")
         XCTAssertEqual(app.staticTexts["reader.mode.title"].label, title)
         for otherMode in ["balance", "trips", "topUp"] where otherMode != mode {
             XCTAssertEqual(app.buttons["mode.\(otherMode)"].value as? String, "No seleccionado")
