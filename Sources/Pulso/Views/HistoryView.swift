@@ -25,11 +25,20 @@ struct HistoryView: View {
                         InfoNotice(
                             title: store.keepHistory ? "Todavía no hay lecturas" : "El historial está desactivado",
                             message: store.keepHistory
-                                ? "Escaneá una tarjeta desde la pestaña Tarjeta. Se guardarán hasta 50 lecturas en este iPhone."
+                                ? "Iniciá una lectura desde la pantalla principal. Se guardarán hasta 50 lecturas del chip en este iPhone. Este registro no contiene viajes."
                                 : "Podés activarlo en Ajustes cuando quieras. La lectura actual sigue disponible durante esta sesión.",
                             systemImage: store.keepHistory ? "wave.3.right" : "lock"
                         )
                         .pulsoSurface()
+                        if let notice = store.historyNotice {
+                            InfoNotice(
+                                title: "Revisá el historial local",
+                                message: notice,
+                                systemImage: "exclamationmark.circle",
+                                tint: PulsoTheme.caution
+                            )
+                            .pulsoSurface()
+                        }
                         privacyNote
                     }
                     .padding(24)
@@ -37,7 +46,7 @@ struct HistoryView: View {
             } else {
                 List {
                     Section {
-                        Text("Estas son lecturas del chip, no viajes. La fecha indica cuándo acercaste la tarjeta al iPhone.")
+                        Text("Este registro contiene lecturas del chip, no viajes. La fecha indica cuándo acercaste la tarjeta al iPhone.")
                             .font(.footnote)
                             .foregroundStyle(PulsoTheme.secondary)
                             .listRowBackground(Color.clear)
@@ -79,14 +88,14 @@ struct HistoryView: View {
         }
         .foregroundStyle(PulsoTheme.ink)
         .background(PulsoTheme.background)
-        .navigationTitle("Lecturas")
+        .navigationTitle("Lecturas NFC")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Borrar historial", systemImage: "trash", role: .destructive) {
                     confirmingDelete = true
                 }
-                .disabled(store.scans.isEmpty)
+                .disabled(store.scans.isEmpty && store.historyNotice == nil)
                 .labelStyle(.iconOnly)
             }
         }

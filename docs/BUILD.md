@@ -1,96 +1,75 @@
-# Compilar Pulso desde Windows 10
+# Compilar y probar Pulso 0.2 desde Windows
 
-## Resultado esperado
+El proyecto ya está en [AnnonyA/Pulso](https://github.com/AnnonyA/Pulso). **No necesitás crear otro repositorio ni instalar Xcode en Windows.** GitHub Actions utiliza una Mac para ejecutar las pruebas y generar **Pulso-unsigned.ipa** para iPhone, arquitectura arm64 y **iOS 26.0 como mínimo**.
 
-GitHub Actions compila el proyecto con Xcode en un runner `macos-26`. La versión mínima de la app queda fijada en **iOS 26.0**, tanto en el proyecto como en el proceso de compilación. Se produce una aplicación de **iPhone, arm64**, empaquetada en `Pulso-unsigned.ipa`.
+Pulso 0.2 presenta tres modos, en este orden: **Consultar saldo**, **Historial** y **Acreditar carga**. Consultar saldo es el predeterminado en cada inicio. En esta etapa, los tres modos intentan detectar el chip y obtener los metadatos públicos que iOS exponga; **todavía no leen saldo ni viajes protegidos, ni acreditan cargas**.
 
-No hace falta instalar Xcode en Windows. La firma e instalación se realizan después con tu método elegido.
+## Descargar o iniciar la compilación
 
-## Opción A: GitHub Desktop
+1. Abrí [Actions de AnnonyA/Pulso](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml) con una cuenta con acceso al proyecto.
+2. Seleccioná **Compilar IPA - iOS 26**. Si ya hay una ejecución correcta para el commit de la versión 0.2 que querés instalar, abrila directamente.
+3. Para compilar de nuevo, elegí **Run workflow**, seleccioná **main** y confirmá **Run workflow**. Los cambios relevantes enviados a main también pueden iniciar el flujo automáticamente.
+4. Esperá el resultado de todas las etapas. Una prueba de interfaz fallida o la ausencia del simulador requerido detienen el flujo antes de producir el IPA de esa ejecución.
+5. En la ejecución correcta, bajá hasta **Artifacts** y descargá **Pulso-iOS26-unsigned-N**, donde N es su número de ejecución.
+6. Extraé el ZIP. El archivo para firmar e instalar es **Pulso-unsigned.ipa**.
+7. Descargá por separado **Pulso-iPhone11-UI-N** para revisar las capturas y los resultados de las pruebas nativas.
 
-1. Instalá [GitHub Desktop](https://desktop.github.com/) e iniciá sesión con tu cuenta.
-2. Extraé el ZIP recibido. La carpeta correcta contiene directamente `README.md`, `Pulso.xcodeproj`, `Sources`, `Config`, `scripts` y `.github`.
-3. Creá un repositorio local nuevo en GitHub Desktop y copiá **todo el contenido** del proyecto dentro de su carpeta. Incluí `.github`, `.gitignore` y `.gitattributes`.
-4. Hacé un commit y elegí **Publish repository**. Podés mantenerlo privado.
-5. Abrí el repositorio en GitHub. En la raíz deben verse `Pulso.xcodeproj` y `.github/workflows/ios.yml`.
-6. Entrá en **Actions**. El primer push a `main` suele iniciar el flujo automáticamente. Si no, seleccioná **Compilar IPA - iOS 26 → Run workflow**.
-7. Esperá a que todas las etapas terminen correctamente. Desde la ejecución, descargá **Pulso-iOS26-unsigned-…** en **Artifacts**.
-8. Extraé el archivo descargado: contiene `Pulso-unsigned.ipa` y sus notas.
+El IPA, las pruebas y las capturas deben corresponder a **la misma ejecución y al mismo commit**. Un artifact anterior no valida cambios posteriores. El workflow conserva IPA y resultados UI durante 14 días; los logs de compilación, durante 7 días.
 
-GitHub conserva estos artifacts durante 14 días según el workflow. El consumo de runners y los límites dependen de la cuenta y de la configuración del repositorio; consultá tu sección de Actions antes de habilitar gasto adicional.
+## Contenido de los artifacts
 
-## Opción B: PowerShell
+| Artifact | Contenido |
+| --- | --- |
+| Pulso-iOS26-unsigned-N | IPA de dispositivo, requisitos de firma, información del build y huella SHA-256. |
+| Pulso-iPhone11-UI-N | Capturas de XCTest, resultados .xcresult, inventario del simulador y logs disponibles. También puede existir si una prueba falla. |
+| Pulso-build-log-N | xcodebuild.log, si la ejecución llegó a la compilación del IPA. |
 
-Instalá [Git para Windows](https://git-scm.com/download/win) y [GitHub CLI](https://cli.github.com/). Si usás `winget`:
-
-```powershell
-winget install --id Git.Git --exact
-winget install --id GitHub.cli --exact
-```
-
-Cerrá y volvé a abrir PowerShell para actualizar el `PATH`. Configurá tu identidad de commits si todavía no lo hiciste:
-
-```powershell
-git config --global user.name "TU NOMBRE"
-git config --global user.email "TU CORREO DE GIT O EL NOREPLY DE GITHUB"
-```
-
-Dentro de la carpeta extraída:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-from-windows.ps1 -RepositoryName pulso-ios
-```
-
-`ExecutionPolicy Bypass` se aplica solamente a ese proceso. El script crea un **repositorio privado nuevo** en la cuenta personal con la que hayas iniciado sesión en `gh`. Si `pulso-ios` ya existe, elegí otro nombre; el ayudante se detiene antes de publicar.
-
-El ayudante requiere una carpeta sin `.git` y fuera de otros repositorios. Esto evita asociarlo por accidente a otro proyecto. La autenticación de GitHub usa el mecanismo habitual de GitHub CLI. El script no guarda tokens en el código ni requiere secretos de Apple.
-
-Al terminar la compilación, el resultado se descarga en `downloads/run-NUMERO/`. Para publicar y seguir la compilación desde el navegador sin esperar en PowerShell:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-from-windows.ps1 -RepositoryName pulso-ios -SkipDownload
-```
-
-Si la publicación quedó hecha pero hubo un corte de conexión al esperar el resultado, no vuelvas a crear el repositorio. Abrí su pestaña Actions y descargá el artifact desde allí.
-
-## Opción C: subir archivos desde GitHub
-
-Creá un repositorio nuevo y usá **Add file → Upload files**. Subí las carpetas y archivos extraídos, no el ZIP y no una carpeta externa que desplace el proyecto un nivel.
-
-Verificá especialmente `.github/workflows/ios.yml`: algunos métodos de arrastrar archivos omiten carpetas ocultas. Si falta, usá **Add file → Create new file**, escribí `.github/workflows/ios.yml` como nombre y pegá el contenido del archivo local. El flujo debe estar en la rama predeterminada para aparecer en **Run workflow**.
-
-## Archivos del artifact
+El paquete del IPA contiene:
 
 | Archivo | Uso |
 | --- | --- |
-| `Pulso-unsigned.ipa` | Aplicación compilada de iPhone pendiente de firma. |
-| `NFC-entitlements.plist` | Referencia del permiso NFC requerido al firmar. |
-| `build-info.json` | Plataforma, arquitectura, versión y mínimo iOS verificados. |
-| `SHA256SUMS.txt` | Huella del IPA sin firmar para comprobar su integridad. |
-| `INSTALL_README.txt` | Notas de instalación y límites del lector. |
+| Pulso-unsigned.ipa | Aplicación de iPhone pendiente de firma. |
+| NFC-entitlements.plist | Referencia del permiso NFC que debe conservarse al firmar. |
+| build-info.json | Plataforma, arquitectura, versión y mínimo iOS verificados. |
+| SHA256SUMS.txt | Huella del IPA sin firmar. |
+| INSTALL_README.txt | Pasos de prueba y límites de esta versión. |
 
-En Windows podés comparar la huella del IPA con `SHA256SUMS.txt`:
+Desde la carpeta del IPA, podés comparar su huella en PowerShell:
 
 ```powershell
 Get-FileHash .\Pulso-unsigned.ipa -Algorithm SHA256
 ```
 
-La huella cambia cuando el IPA se vuelve a firmar; eso es esperado.
+La huella cambia al volver a firmar el archivo.
 
-## Qué valida Actions
+## Qué está configurado para probar Actions
 
-1. Selecciona una instalación estable de Xcode 26 o posterior con SDK de iPhone 26 o posterior.
-2. Revisa el proyecto, el esquema, los archivos de configuración NFC, el manifiesto de privacidad y los recursos.
-3. Ejecuta `swift test --parallel` sobre `PulsoDomain`, un módulo de modelo puro que no depende de Core NFC ni de SwiftUI.
-4. Compila `Pulso.xcodeproj` para un dispositivo iPhone genérico, en Release y sin firma.
-5. Crea `Payload/Pulso.app` con el resultado real de Xcode y lo empaqueta en un IPA.
-6. Verifica el encabezado Mach-O, arquitectura arm64, plataforma iOS, versión mínima 26.0, recursos compilados y manifiesto de privacidad.
+Esta sección describe **las comprobaciones previstas**, no afirma que una ejecución concreta haya pasado. Confirmá su resultado en las etapas de Actions, los logs y el archivo **ui-test-summary.json**.
 
-El proceso rechaza binarios de simulador y archivos fuente empaquetados como si fueran una app. Ninguna de estas comprobaciones sustituye la prueba NFC con tu tarjeta real.
+1. Seleccionar Xcode 26 o posterior con un SDK de iPhone 26 o posterior.
+2. Validar proyecto, esquemas, configuración NFC, privacidad y recursos.
+3. Ejecutar las **13 pruebas de dominio** con **swift test --parallel**: modos, conservación de la operación solicitada, historial anterior, serialización y privacidad.
+4. Compilar Debug y ejecutar los tres escenarios UI siguientes en un **simulador iPhone 11 con un runtime iOS 26 instalado**.
+5. Compilar Release para dispositivo iPhone, sin firma.
+6. Empaquetar la app real de Xcode y verificar Mach-O, arm64, plataforma iPhoneOS, mínimo iOS 26.0, recursos y manifiesto de privacidad.
 
-## Firma e instalación: el requisito para que funcione NFC
+### Tres escenarios de interfaz nativa
 
-El archivo generado está **sin firmar**. Para instalarlo, la identidad del binario, su firma y el provisioning profile deben corresponder. El perfil y los entitlements firmados tienen que permitir:
+| Escenario | Comprobaciones previstas | Capturas previstas |
+| --- | --- | --- |
+| Claro | Orden y selección de los tres modos, títulos y límites, respuesta real de NFC no disponible en simulador, modo predeterminado al reiniciar y menú. | Consultar saldo, Historial, Acreditar carga y estado después de reiniciar. |
+| Oscuro | Inicio y modo predeterminado con apariencia oscura del sistema. | Consultar saldo en oscuro. |
+| Texto grande | Modo predeterminado y cambio a Historial con texto de accesibilidad. | Consultar saldo e Historial con texto grande. |
+
+El script exige **iPhone 11 e iOS 26**. Si faltan, informa el problema; no sustituye silenciosamente otro modelo o versión. Las capturas previstas son imágenes de **828 × 1792 píxeles** obtenidas mediante XCTest.
+
+**Tener el artifact UI no significa que las pruebas hayan pasado**: se intenta conservar evidencia también ante fallos. Revisá el estado de la etapa y el resumen de escenarios. Los archivos .xcresult y los logs permiten comprobar qué se ejecutó.
+
+El simulador no puede leer una tarjeta física. Los argumentos de prueba solo permiten omitir la bienvenida y controlar la apariencia en Debug; no habilitan NFC ficticio ni insertan tarjetas de ejemplo.
+
+## Firma e instalación: habilitar NFC
+
+El IPA está **sin firmar** y no incluye un provisioning profile de Apple. La identidad final de la app, su firma y el perfil deben corresponder. Tanto el perfil como los entitlements firmados deben permitir:
 
 ```xml
 <key>com.apple.developer.nfc.readersession.formats</key>
@@ -99,53 +78,68 @@ El archivo generado está **sin firmar**. Para instalarlo, la identidad del bina
 </array>
 ```
 
-El bundle identifier inicial es `app.pulso.nfcreader`. Si tu método de firma lo cambia, debe mantenerlo consistente con el perfil y conservar NFC. El archivo `NFC-entitlements.plist` es solamente una referencia; agregarlo a un ZIP o editar un plist no concede permisos.
+El bundle identifier inicial es **app.pulso.nfcreader**. Si tu método de firma lo cambia, debe mantenerlo consistente con el perfil y conservar NFC. Copiar NFC-entitlements.plist al IPA o editar un plist no concede ese permiso.
 
-Las capacidades disponibles dependen del tipo de cuenta y de perfil de Apple. No se garantiza que todos los métodos de instalación o firmas personales gratuitas permitan esta capacidad. Si instalás la app pero el lector da un error de entitlement, el problema está en la firma/perfil; reinstalar el mismo archivo con el mismo perfil no lo resuelve.
+No todos los tipos de cuenta, perfiles o métodos de instalación permiten conservar la capacidad. Si la interfaz abre pero el lector informa un error NFC de permisos, revisá la firma y el perfil. Pulso usa **Core NFC**; no utiliza Apple Pay, HCE ni emulación mediante NFC & SE.
 
-Este lector no usa Apple Pay, HCE ni la plataforma NFC & SE. Tampoco requiere autenticarse con SUBE para detectar los metadatos públicos que iOS exponga.
+### Cuenta de usuario y autorización de SUBE son cosas distintas
 
-## Prueba con iPhone 11
+Pulso no pide usuario, contraseña ni inicio de sesión. Eso es independiente de la **autorización técnica para acceder a la tarjeta y sus operaciones protegidas**.
 
-1. Comprobá que tenga iOS 26.0 o posterior e instalá la app con un perfil NFC válido.
-2. Abrí Pulso y seguí la guía de escaneo.
-3. Acercá una sola tarjeta a la parte posterior superior del iPhone, cerca de la cámara. Mantenela quieta durante la lectura.
-4. Si se detecta, revisá la familia y el identificador. La app mantiene la distinción entre identificador del chip y número de SUBE.
-5. Si no se detecta, quitá otras tarjetas o una funda que interfiera y repetí. Algunas tarjetas o modos no son accesibles con Core NFC; el programa no puede cambiar ese soporte.
-6. Si querés compartir el diagnóstico, usá el informe con identificador oculto para empezar.
+Esta versión no implementa autenticación de la tarjeta ni una integración autorizada para leer saldo, recuperar viajes o acreditar cargas. Seleccionar un modo y detectar el chip no concede ese acceso. La app indica que la operación sigue sin estar disponible; no presenta importes, viajes ni cargas realizadas sin haberlos obtenido realmente.
 
-Las fechas del historial son **momentos de escaneo**, nunca fechas de viajes. Saldo y último viaje siguen sin estar disponibles en esta versión sin autenticación.
+## Primera prueba con el iPhone 11
+
+1. Usá **iOS 26.0 o posterior** e instalá la app con una firma y un perfil NFC válidos.
+2. Abrí Pulso y completá la bienvenida si aparece. La pantalla empieza en **Consultar saldo**.
+3. Elegí **Consultar saldo**, **Historial** o **Acreditar carga** y tocá **Iniciar lectura**. Ese botón abre directamente el lector de iOS; no hay una segunda guía que confirmar.
+4. Acercá una sola SUBE a la **parte posterior superior del iPhone**, cerca del borde de arriba, y mantenela quieta. Separá otras tarjetas y accesorios que interfieran.
+5. Si iOS detecta el chip, Pulso muestra que la operación protegida todavía no está disponible. Abrí **Ver datos del chip** para revisar familia y metadatos.
+6. Si no se detecta, cambiá de posición, probá sin una funda que interfiera y repetí. Algunas tarjetas o modos no son accesibles con Core NFC; instalar la app no agrega protocolos que iOS no admite.
+7. Para compartir evidencia, usá **Compartir diagnóstico**. El UID completo queda oculto por defecto; incluir los metadatos completos requiere una elección aparte.
+
+El **UID no es el número impreso de SUBE**. Detectar MIFARE Plus no verifica que el emisor sea SUBE. Las fechas del **Historial de lecturas NFC**, disponible en el menú, son momentos de escaneo, no viajes.
 
 ## Errores frecuentes
 
 | Problema | Qué revisar |
 | --- | --- |
-| No aparece el workflow | Debe existir `.github/workflows/ios.yml` en la raíz y en la rama predeterminada. |
-| El trabajo no inicia | Revisá si Actions está habilitado y si la cuenta tiene cuota de ejecución. |
-| GitHub CLI rechaza el push de un workflow | Revisá que tu autorización de GitHub incluya el alcance `workflow`; con `gh`, usá `gh auth refresh --hostname github.com --scopes workflow`. |
-| No hay Xcode compatible | Consultá la imagen oficial del runner; el script muestra la falta de SDK y no produce un IPA falso. |
-| Error de Swift | Abrí la etapa roja y descargá `Pulso-build-log-…` si llegó a compilar. Conservá el error exacto para corregirlo. |
-| El `.ipa` no se instala | Recordá que está sin firmar; necesitás firma, perfil y dispositivo autorizados según el método elegido. |
-| Instala, pero NFC falla por permisos | Comprobá el entitlement NFC y el provisioning profile usados por el firmador. |
-| Se agota el tiempo de escaneo | Probá la posición, una sola tarjeta y la compatibilidad de ese chip/modo. |
-| Detecta otra tarjeta MIFARE | MIFARE es una familia de chips compartida; la detección no verifica que sea SUBE. |
+| No aparece Run workflow | Abrí el workflow de AnnonyA/Pulso con permiso para ejecutarlo y comprobá que exista en la rama predeterminada. |
+| La ejecución no inicia | Revisá si Actions está habilitado y si hay cuota disponible. |
+| Falta iOS 26 o el tipo de dispositivo iPhone 11 | Consultá el inventario y logs de la etapa UI. Son requisitos explícitos de las pruebas. |
+| Falla una prueba UI | Descargá Pulso-iPhone11-UI-N y revisá escenario, .xcresult, capturas y logs. Esa ejecución no genera IPA mientras falle la etapa. |
+| Error de Swift | Consultá la etapa roja: el build de simulador tiene logs en el artifact UI; el de dispositivo, en Pulso-build-log-N si existe. |
+| No aparece el artifact IPA | Verificá que la ejecución completa haya terminado correctamente. Puede haber evidencia UI aunque el empaquetado nunca haya comenzado. |
+| El IPA no se instala | Está sin firmar: necesitás firma, perfil y dispositivo autorizados según tu método. |
+| Instala, pero NFC falla por permisos | Comprobá NFC TAG en el perfil y los entitlements firmados. |
+| Se agota el tiempo | Probá posición, una sola tarjeta y compatibilidad del chip o modo. |
+| Detecta MIFARE pero no muestra saldo | Detectar el chip no permite acceder por sí solo a sus datos protegidos ni confirma el emisor. |
 
-## Compilar en una Mac, si más adelante tenés acceso
+## Compilar en una Mac
+
+Desde la raíz del proyecto, con Xcode seleccionado y un runtime iOS 26 instalado:
 
 ```bash
 python3 scripts/validate_project.py
 swift test --parallel
+python3 scripts/run_ui_tests.py
 bash scripts/build_unsigned_ipa.sh
 ```
 
-Para ejecutar desde Xcode, abrí `Pulso.xcodeproj`, seleccioná tu equipo de desarrollo y configurá un bundle identifier y perfil que permitan lectura NFC. Las vistas se pueden inspeccionar en el simulador; el NFC necesita un iPhone real.
+Para ejecutar desde Xcode, abrí Pulso.xcodeproj, elegí tu equipo de desarrollo y configurá un bundle identifier y perfil que permitan NFC. El simulador sirve para la interfaz; la prueba SUBE requiere el iPhone y la tarjeta reales.
 
-## Fuentes primarias
+## Opcional: crear una copia en otro repositorio
 
-- [GitHub: ejecutores hospedados](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
-- [Imagen oficial: macOS 26 / Xcode disponible](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md).
+Para AnnonyA/Pulso, seguí el flujo principal. Si querés una copia independiente, podés publicar la carpeta completa con GitHub Desktop o usar **scripts/build-from-windows.ps1** con un nombre nuevo.
+
+Ese ayudante crea **otro repositorio privado**; no reutiliza AnnonyA/Pulso. Requiere Git, GitHub CLI y una carpeta fuera de cualquier repositorio Git. Incluí **.github/workflows/ios.yml** en la raíz. No crees otro repositorio solo porque falle una compilación: corregí el fallo y volvé a ejecutar su workflow.
+
+## Referencias
+
+- [Workflow del proyecto](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml).
 - [GitHub: ejecutar workflows manualmente](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+- [Imagen oficial del runner macOS 26](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md).
 - [Apple: NFCTagReaderSession](https://developer.apple.com/documentation/corenfc/nfctagreadersession).
-- [Apple: entitlement NFC de lectura](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.nfc.readersession.formats).
+- [Apple: entitlement NFC](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.nfc.readersession.formats).
 - [Apple: capacidades de perfiles iOS](https://developer.apple.com/help/account/reference/supported-capabilities-ios).
-- [Apple: razones declaradas para acceso a preferencias y archivos](https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitypereasons).
+- [SUBE: funciones y compatibilidad oficial](https://www.argentina.gob.ar/sube/terminos-y-condiciones-sitio-oficial-sube/app-sube).

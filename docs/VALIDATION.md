@@ -1,6 +1,14 @@
 # Estado de la entrega
 
-Actualizado el 27 de noviembre de 2026. App 0.1.0, build 1.
+Actualizado el 27 de noviembre de 2026.
+
+## Versión 0.2.0, build 2
+
+La nueva interfaz de tres modos incorpora pruebas nativas en iPhone 11 simulado con iOS 26. El flujo exige completar las pruebas de dominio y de interfaz antes de publicar el IPA. La primera ejecución de esta versión está pendiente; no se considera verificada por haber pasado los controles estáticos.
+
+Las capturas reales y los resultados de XCTest estarán en el artifact `Pulso-iPhone11-UI-N`. Se probarán los tres modos, el regreso a saldo al relanzar, el error real de NFC en simulador, el tema oscuro y el texto de accesibilidad. El simulador no prueba el contacto con una SUBE física.
+
+## Registro histórico: versión 0.1.0, build 1
 
 ## Compilación nativa confirmada
 

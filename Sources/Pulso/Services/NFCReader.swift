@@ -108,34 +108,42 @@ final class NFCReader: NSObject, NFCTagReaderSessionDelegate, @unchecked Sendabl
         isConnecting = true
         emit(.phase(.connecting), for: requestID)
         session.alertMessage = "Tarjeta encontrada. Mantenela quieta un momento."
-        session.connect(to: tag) { [weak self, weak session] error in
-            guard let self, let session else { return }
+        session.connect(to: tag) { [weak self] error in
+            guard let self else { return }
             dispatchPrecondition(condition: .onQueue(self.queue))
-            guard self.session === session, self.requestID == requestID, !self.isFinishing else { return }
+            // The callback runs on `queue`. Recover the current session and tag
+            // there instead of capturing Apple's non-Sendable NFC objects in
+            // the completion closure. Each UUID names exactly one session.
+            guard self.requestID == requestID, !self.isFinishing, self.isConnecting,
+                  let currentSession = self.session else { return }
             self.isConnecting = false
 
             if let error {
                 self.connectionFailures += 1
                 if let nfcError = error as? NFCReaderError,
                    nfcError.code == .readerErrorSecurityViolation || nfcError.code == .readerErrorUnsupportedFeature {
-                    self.fail(self.message(for: error), session: session, requestID: requestID)
+                    self.fail(self.message(for: error), session: currentSession, requestID: requestID)
                 } else if self.connectionFailures < 3 {
                     self.scheduleRetry(message: "Se perdió el contacto. Retirá la tarjeta y volvé a apoyarla arriba, detrás del iPhone.")
                 } else {
-                    self.fail("No pudimos mantener la conexión. Quitá la funda, separá otras tarjetas e intentá de nuevo. Algunas SUBE no son compatibles con Core NFC.", session: session, requestID: requestID)
+                    self.fail("No pudimos mantener la conexión. Quitá la funda, separá otras tarjetas e intentá de nuevo. Algunas SUBE no son compatibles con Core NFC.", session: currentSession, requestID: requestID)
                 }
                 return
             }
 
-            guard let record = self.makeRecord(from: tag) else {
-                self.fail("iOS encontró una tarjeta, pero no expone sus metadatos mediante este lector.", session: session, requestID: requestID)
+            guard let connectedTag = currentSession.connectedTag else {
+                self.fail("Se perdió el contacto antes de terminar. Mantené la tarjeta junto al borde superior del iPhone y volvé a intentar.", session: currentSession, requestID: requestID)
+                return
+            }
+            guard let record = self.makeRecord(from: connectedTag) else {
+                self.fail("iOS encontró una tarjeta, pero no expone sus metadatos mediante este lector.", session: currentSession, requestID: requestID)
                 return
             }
 
             self.isFinishing = true
             self.emit(.record(record), for: requestID)
-            session.alertMessage = "Metadatos NFC leídos. El saldo y los viajes todavía no están disponibles."
-            session.invalidate()
+            currentSession.alertMessage = "Tarjeta detectada. El saldo, los viajes y la acreditación no están disponibles en esta versión."
+            currentSession.invalidate()
         }
     }
 

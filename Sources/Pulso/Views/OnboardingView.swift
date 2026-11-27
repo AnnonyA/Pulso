@@ -5,42 +5,45 @@ struct OnboardingView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                HStack(spacing: 10) {
-                    PulsoMark()
-                    Text("pulso")
-                        .font(.system(.title2, design: .rounded, weight: .bold))
+            VStack(alignment: .leading, spacing: 25) {
+                HStack(spacing: 11) {
+                    PulsoMark(size: 46)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Pulso")
+                            .font(.title2.weight(.semibold))
+                        Text("Una app independiente para SUBE")
+                            .font(.caption)
+                            .foregroundStyle(PulsoTheme.secondary)
+                    }
                 }
-                .padding(.top, 18)
-
-                VStack(alignment: .leading, spacing: 14) {
-                    Eyebrow(text: "Tu primera lectura")
-                    Text("Acercá tu tarjeta.\nDescubrí su señal.")
-                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text("Un lector NFC para explorar tu SUBE desde el iPhone, a tu ritmo.")
-                        .font(.body)
-                        .foregroundStyle(PulsoTheme.secondary)
-                }
+                .padding(.top, 20)
 
                 NFCPlacementIllustration()
-                    .frame(height: 225)
+                    .frame(height: 260)
 
-                VStack(alignment: .leading, spacing: 24) {
-                    OnboardingFeature(
-                        symbol: "wave.3.right",
-                        title: "Detectá el chip",
-                        detail: "Si iOS lo admite, vas a ver su familia y los datos públicos de la tarjeta."
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Tu tarjeta,\nmás cerca.")
+                        .font(.largeTitle.weight(.bold))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Elegí Consultar saldo, Historial o Acreditar carga y acercá la SUBE a tu iPhone.")
+                        .font(.body)
+                        .foregroundStyle(PulsoTheme.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(alignment: .leading, spacing: 18) {
+                    InfoNotice(
+                        title: "Primero, conocer tu tarjeta",
+                        message: "Si iOS admite la tarjeta, podés detectar su chip. El saldo, los viajes y la acreditación todavía requieren acceso a las funciones protegidas de SUBE.",
+                        systemImage: "wave.3.right",
+                        tint: PulsoTheme.accent
                     )
-                    OnboardingFeature(
-                        symbol: "lock.shield",
-                        title: "La tarjeta queda intacta",
-                        detail: "Esta versión no autentica ni modifica la tarjeta. El saldo y los viajes todavía no se leen."
-                    )
-                    OnboardingFeature(
-                        symbol: "iphone",
-                        title: "Todo queda en tu iPhone",
-                        detail: "Sin cuenta ni servidor. Vos decidís si guardás o compartís las lecturas."
+                    Divider()
+                    InfoNotice(
+                        title: "Sin cuenta. Sin cambiar tu tarjeta.",
+                        message: "Las lecturas quedan en tu iPhone. Podés borrarlas o compartir un diagnóstico cuando quieras.",
+                        systemImage: "lock.shield",
+                        tint: PulsoTheme.accent
                     )
                 }
                 .pulsoSurface()
@@ -48,23 +51,24 @@ struct OnboardingView: View {
                 Button(action: onContinue) {
                     HStack {
                         Text("Empezar")
-                        Spacer()
+                        Spacer(minLength: 12)
                         Image(systemName: "arrow.right")
                     }
                     .font(.headline)
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 8)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 6)
                 }
-                .buttonStyle(.glassProminent)
-                .buttonBorderShape(.roundedRectangle(radius: 20))
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.roundedRectangle(radius: 16))
                 .tint(PulsoTheme.accent)
+                .accessibilityIdentifier("onboarding.continue")
 
-                Text("Proyecto independiente. No es la aplicación oficial de SUBE ni está afiliado a Nación Servicios.")
+                Text("Pulso no es la aplicación oficial de SUBE ni está afiliado a Nación Servicios.")
                     .font(.caption)
                     .foregroundStyle(PulsoTheme.secondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, 16)
             }
             .padding(.horizontal, 24)
         }
@@ -73,78 +77,92 @@ struct OnboardingView: View {
     }
 }
 
-private struct OnboardingFeature: View {
-    let symbol: String
-    let title: String
-    let detail: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 15) {
-            Image(systemName: symbol)
-                .font(.title3)
-                .foregroundStyle(PulsoTheme.accent)
-                .frame(width: 30, height: 30)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(title).font(.headline)
-                Text(detail)
-                    .font(.subheadline)
-                    .foregroundStyle(PulsoTheme.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-}
-
-/// A decorative guide, never a simulated NFC reading or balance.
+/// Lightweight reference-inspired artwork. It never represents a successful
+/// balance/top-up operation: the centre symbol is an NFC wave, not a checkmark.
+/// All geometry is native and static, including with Reduce Motion enabled.
 struct NFCPlacementIllustration: View {
+    var compact = false
+
     var body: some View {
         ZStack {
             Circle()
-                .fill(PulsoTheme.surfaceSecondary)
-                .frame(width: 210, height: 210)
-            Circle()
-                .stroke(PulsoTheme.accent.opacity(0.16), style: StrokeStyle(lineWidth: 1, dash: [4, 7]))
-                .frame(width: 244, height: 244)
+                .fill(PulsoTheme.illustrationHalo)
+                .frame(width: 228, height: 228)
+                .offset(y: 6)
+
+            RoundedRectangle(cornerRadius: 13)
+                .fill(PulsoTheme.headerBlue)
+                .frame(width: 144, height: 91)
+                .overlay(alignment: .topLeading) {
+                    Text("SUBE")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.top, 15)
+                        .padding(.leading, 14)
+                }
+                .overlay(alignment: .bottomLeading) {
+                    Image(systemName: "wave.3.right")
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.75))
+                        .padding(14)
+                }
+                .rotationEffect(.degrees(-14))
+                .offset(x: -65, y: 22)
 
             RoundedRectangle(cornerRadius: 25)
-                .fill(PulsoTheme.deepGreen)
-                .frame(width: 99, height: 184)
+                .fill(PulsoTheme.illustrationFrame)
+                .frame(width: 141, height: 237)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(PulsoTheme.illustrationScreen)
+                        .frame(width: 125, height: 221)
+                        .overlay(alignment: .topTrailing) {
+                            ScreenHighlight()
+                                .fill(.white.opacity(0.14))
+                                .frame(width: 125, height: 221)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                }
                 .overlay(alignment: .top) {
-                    Capsule()
-                        .fill(PulsoTheme.mint.opacity(0.45))
-                        .frame(width: 34, height: 5)
-                        .padding(.top, 12)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(PulsoTheme.illustrationFrame)
+                        .frame(width: 51, height: 7)
+                        .padding(.top, 7)
                 }
-                .rotationEffect(.degrees(-12))
-                .offset(x: -34, y: 10)
-
-            RoundedRectangle(cornerRadius: 16)
-                .fill(PulsoTheme.mint.gradient)
-                .frame(width: 142, height: 91)
-                .overlay(alignment: .topLeading) {
+                .overlay {
                     Image(systemName: "wave.3.right")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(PulsoTheme.deepGreen)
-                        .padding(15)
+                        .font(.system(size: 29, weight: .medium))
+                        .foregroundStyle(PulsoTheme.orange)
+                        .frame(width: 65, height: 65)
+                        .background(PulsoTheme.surface, in: Circle())
+                        .overlay {
+                            Circle().stroke(PulsoTheme.orange.opacity(0.45), lineWidth: 2)
+                        }
                 }
-                .overlay(alignment: .bottomTrailing) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(PulsoTheme.deepGreen.opacity(0.18))
-                        .frame(width: 45, height: 5)
-                        .padding(15)
-                }
-                .rotationEffect(.degrees(13))
-                .offset(x: 42, y: -39)
-                .shadow(color: .black.opacity(0.13), radius: 15, y: 8)
+                .offset(x: 30)
 
-            Image(systemName: "sparkle")
+            Image(systemName: "dot.radiowaves.left.and.right")
+                .font(.system(size: 24, weight: .light))
                 .foregroundStyle(PulsoTheme.accent)
-                .font(.title2)
-                .offset(x: 94, y: 69)
+                .offset(x: 30, y: -135)
         }
+        .padding(.top, 17)
+        .frame(width: 290, height: 260)
+        .scaleEffect(compact ? 0.77 : 1)
+        .frame(height: compact ? 200 : 260)
         .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
+    }
+}
+
+private struct ScreenHighlight: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.maxX * 0.75, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY * 0.72))
+        path.closeSubpath()
+        return path
     }
 }

@@ -6,6 +6,16 @@ struct PulsoApp: App {
     @AppStorage("pulso.appearance") private var appearance = AppAppearance.system.rawValue
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-pulso-ui-testing") {
+            // Let simctl control light/dark UI tests. This never changes NFC
+            // availability, card records, or the release app's launch behavior.
+            UserDefaults.standard.removeObject(forKey: "pulso.appearance")
+        }
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

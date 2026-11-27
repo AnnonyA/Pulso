@@ -4,13 +4,12 @@ import UniformTypeIdentifiers
 
 struct ScanDetailView: View {
     let record: ScanRecord
-    var onScanAgain: (@MainActor () -> Void)? = nil
 
     @Environment(ReaderStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var showingExport = false
 
-    /// A navigation stack can survive while another tab removes its data.
+    /// A navigation stack can survive while another route removes its data.
     /// An unpersisted current scan is still available when history is disabled.
     private var recordIsAvailable: Bool {
         store.latestScan?.id == record.id || store.scans.contains { $0.id == record.id }
@@ -20,9 +19,9 @@ struct ScanDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 13) {
-                    StatusPill(text: "Lectura completada", systemImage: "checkmark.circle.fill")
-                    Text("Hay una señal.")
-                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    StatusPill(text: "Datos públicos del chip", systemImage: "wave.3.right")
+                    Text("Lectura NFC")
+                        .font(.largeTitle.weight(.bold))
                     Text("El iPhone obtuvo los datos públicos que expone esta tarjeta.")
                         .font(.subheadline)
                         .foregroundStyle(PulsoTheme.secondary)
@@ -65,17 +64,29 @@ struct ScanDetailView: View {
                 )
                 .pulsoSurface()
 
-                VStack(alignment: .leading, spacing: 16) {
-                    Eyebrow(text: "Saldo y viajes")
-                    UnavailableDataRow(title: "Saldo real", systemImage: "creditcard")
-                    Divider()
-                    UnavailableDataRow(title: "Último viaje", systemImage: "bus")
-                    Text("Esta versión no accede a los sectores protegidos de la tarjeta. Una detección exitosa no implica que esos datos sean legibles.")
-                        .font(.footnote)
-                        .foregroundStyle(PulsoTheme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                if let requestedMode = record.requestedMode {
+                    InfoNotice(
+                        title: requestedMode.unavailableTitle,
+                        message: requestedMode.unavailableMessage,
+                        systemImage: "lock",
+                        tint: PulsoTheme.accent
+                    )
+                    .pulsoSurface()
+                } else {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Eyebrow(text: "Funciones de transporte")
+                        UnavailableDataRow(title: "Saldo real", systemImage: "creditcard")
+                        Divider()
+                        UnavailableDataRow(title: "Historial de viajes", systemImage: "bus")
+                        Divider()
+                        UnavailableDataRow(title: "Acreditación de cargas", systemImage: "arrow.down.to.line")
+                        Text("Esta versión no accede a los sectores protegidos de la tarjeta. Detectar el chip no habilita estas funciones.")
+                            .font(.footnote)
+                            .foregroundStyle(PulsoTheme.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .pulsoSurface()
                 }
-                .pulsoSurface()
 
                 technicalInformation
 
@@ -83,7 +94,7 @@ struct ScanDetailView: View {
                     InfoNotice(
                         title: "Sobre el historial local",
                         message: notice,
-                        systemImage: "externaldrive.badge.exclamationmark",
+                        systemImage: "exclamationmark.circle",
                         tint: PulsoTheme.caution
                     )
                     .pulsoSurface()
@@ -97,12 +108,8 @@ struct ScanDetailView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                 }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.roundedRectangle(radius: 20))
-
-                if let onScanAgain {
-                    PrimaryScanButton(title: "Leer otra tarjeta", action: onScanAgain)
-                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.roundedRectangle(radius: 16))
             }
             .padding(24)
         }
@@ -134,6 +141,9 @@ struct ScanDetailView: View {
     private var technicalInformation: some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: 18) {
+                if let mode = record.requestedMode {
+                    MetadataRow(title: "Operación elegida al escanear", value: mode.title)
+                }
                 MetadataRow(title: "Tecnología", value: record.technology)
                 MetadataRow(title: "Familia informada por iOS", value: record.family)
                 MetadataRow(title: "Bytes históricos", value: record.historicalBytesHex ?? "No informados", monospaced: true)
@@ -239,8 +249,8 @@ struct DiagnosticExportView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                     }
-                    .buttonStyle(.glassProminent)
-                    .buttonBorderShape(.roundedRectangle(radius: 20))
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.roundedRectangle(radius: 16))
                     .tint(PulsoTheme.accent)
 
                     ShareLink(item: record.shareSummary) {

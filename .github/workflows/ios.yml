@@ -2,6 +2,8 @@ name: Compilar IPA - iOS 26
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main, master]
   push:
     branches: [main, master]
     paths:
@@ -18,14 +20,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: pulso-ios-${{ github.ref }}
+  group: pulso-ios-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-ipa:
-    name: iPhone arm64 - sin firmar
+    name: iPhone 11 UI + IPA arm64
     runs-on: macos-26
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - name: Descargar codigo
         uses: actions/checkout@v6
@@ -46,6 +48,21 @@ jobs:
 
       - name: Probar modelo de datos y exportacion
         run: swift test --parallel
+
+      - name: Probar UI real en iPhone 11 con iOS 26
+        run: python3 scripts/run_ui_tests.py
+
+      - name: Conservar capturas y resultados nativos
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Pulso-iPhone11-UI-${{ github.run_number }}
+          path: |
+            build/ui-artifacts/
+            build/ui-results/
+          if-no-files-found: ignore
+          retention-days: 14
+          compression-level: 6
 
       - name: Compilar y verificar IPA de iPhone
         run: bash scripts/build_unsigned_ipa.sh
@@ -85,6 +102,8 @@ jobs:
               report.write('[Descargar IPA y notas](' + os.environ['PULSO_ARTIFACT_URL'] + ')\n\n')
               report.write('- iOS minimo: **26.0**; arquitectura: **arm64**.\n')
               report.write('- Se verifico un ejecutable Mach-O para iPhone, sus recursos y su version minima.\n')
+              report.write('- La UI se probo en un simulador **iPhone 11 / iOS 26**, con modos, reinicio, tema oscuro y texto grande.\n')
+              report.write('- Las capturas y los resultados XCTest estan en el artifact **Pulso-iPhone11-UI** de esta ejecucion.\n')
               report.write('- El IPA esta **sin firmar**. Necesita firma y perfil validos con NFC TAG antes de usar el lector.\n')
               report.write('- Esta compilacion no realiza una prueba fisica con una tarjeta SUBE.\n')
           PY

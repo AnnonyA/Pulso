@@ -3,27 +3,21 @@ import SwiftUI
 struct RootView: View {
     @AppStorage("pulso.hasSeenOnboarding") private var hasSeenOnboarding = false
 
+    private var skipsOnboardingForUITests: Bool {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        return arguments.contains("-pulso-ui-testing") && arguments.contains("-pulso-skip-onboarding")
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
-        TabView {
-            Tab("Tarjeta", systemImage: "wave.3.right") {
-                NavigationStack {
-                    DashboardView()
-                }
-            }
-            Tab("Lecturas", systemImage: "clock.arrow.circlepath") {
-                NavigationStack {
-                    HistoryView()
-                }
-            }
-            Tab("Ajustes", systemImage: "slider.horizontal.3") {
-                NavigationStack {
-                    SettingsView()
-                }
-            }
+        NavigationStack {
+            DashboardView()
         }
-        .tabBarMinimizeBehavior(.never)
         .fullScreenCover(isPresented: Binding(
-            get: { !hasSeenOnboarding },
+            get: { !hasSeenOnboarding && !skipsOnboardingForUITests },
             set: { if !$0 { hasSeenOnboarding = true } }
         )) {
             OnboardingView {

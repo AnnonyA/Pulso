@@ -31,6 +31,9 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
     var applicationDataHex: String?
     var selectedAID: String?
     var notes: [String]
+    /// Optional so saved records from version 0.1 decode without migration.
+    /// A missing mode stays unknown; it must not be relabeled as a balance query.
+    var requestedMode: ReaderMode?
 
     init(
         id: UUID = UUID(),
@@ -41,7 +44,8 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
         historicalBytesHex: String? = nil,
         applicationDataHex: String? = nil,
         selectedAID: String? = nil,
-        notes: [String] = []
+        notes: [String] = [],
+        requestedMode: ReaderMode? = nil
     ) {
         self.id = id
         self.scannedAt = scannedAt
@@ -52,6 +56,7 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
         self.applicationDataHex = applicationDataHex
         self.selectedAID = selectedAID
         self.notes = notes
+        self.requestedMode = requestedMode
     }
 
     var maskedIdentifier: String {
@@ -70,12 +75,14 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
         """
         Pulso · Diagnóstico NFC
         Fecha de lectura: \(scannedAt.formatted(.iso8601))
+        Operación solicitada: \(requestedMode?.title ?? "Diagnóstico NFC")
         Tecnología: \(technology)
         Familia informada por iOS: \(family)
         Identificador NFC: \(maskedIdentifier)
         Emisor SUBE: sin verificar
         Saldo: no disponible
         Último viaje: no disponible
+        Acreditación de carga: no realizada
         Lectura de metadatos públicos, sin autenticación ni escritura.
         La fecha corresponde al escaneo, no a un viaje.
         """
@@ -91,6 +98,8 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
             let scannedAt: Date
             let technology: String
             let family: String
+            let requestedMode: ReaderMode?
+            let requestedOperationStatus: String
             let identifierRedacted: Bool
             let maskedIdentifier: String
             let uidHex: String?
@@ -100,16 +109,19 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
             let subeVerified: Bool
             let balanceStatus: String
             let lastTripStatus: String
+            let topUpStatus: String
             let notes: [String]
         }
 
         let value = Diagnostic(
-            schemaVersion: 1,
+            schemaVersion: 2,
             app: "Pulso",
             source: "Core NFC · public tag metadata",
             scannedAt: scannedAt,
             technology: technology,
             family: family,
+            requestedMode: requestedMode,
+            requestedOperationStatus: requestedMode == nil ? "not_requested" : "unavailable_without_authorized_access",
             identifierRedacted: !includeIdentifier,
             maskedIdentifier: maskedIdentifier,
             uidHex: includeIdentifier ? uidHex : nil,
@@ -119,6 +131,7 @@ struct ScanRecord: Identifiable, Codable, Hashable, Sendable {
             subeVerified: false,
             balanceStatus: "unavailable_without_authorized_access",
             lastTripStatus: "unavailable_without_authorized_access",
+            topUpStatus: "not_performed",
             notes: notes
         )
         let encoder = JSONEncoder()
