@@ -14,6 +14,7 @@ import signal
 import struct
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACTS = ROOT / "build/ui-artifacts"
@@ -180,9 +181,9 @@ def main() -> int:
             raise RuntimeError("simctl did not return a valid device UDID.")
         report["simulator"] = {"udid": device_id, "deviceType": DEVICE_TYPE, "runtime": runtime}
         write_json(ARTIFACTS / "simulator-info.json", report["simulator"])
+        print(f"Simulator: iPhone 11; runtime {runtime['version']} ({runtime.get('buildversion', 'build not supplied')}); UDID {device_id}", flush=True)
+        boot_started = time.monotonic()
         command(["xcrun", "simctl", "boot", device_id], timeout=90)
-        command(["xcrun", "simctl", "bootstatus", device_id, "-b"], timeout=240, log=ARTIFACTS / "logs/boot.log")
-        command(["xcrun", "simctl", "status_bar", device_id, "override", "--time", "9:41", "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3", "--batteryState", "charged", "--batteryLevel", "100"], required=False)
 
         base = [
             "xcodebuild", "-project", "Pulso.xcodeproj", "-scheme", "Pulso", "-configuration", "Debug",
@@ -192,7 +193,16 @@ def main() -> int:
             "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGN_IDENTITY=", "DEVELOPMENT_TEAM=",
             "IPHONEOS_DEPLOYMENT_TARGET=26.0",
         ]
+        # A fresh iOS 26 simulator performs data migration on first boot. Build
+        # while it initializes, so compiler errors remain independently visible.
+        # The first observed CI boot needed more than 240s in CoreLocationMigrator.
         command(base + ["build-for-testing"], timeout=720, log=ARTIFACTS / "logs/build-for-testing.log")
+        print("Simulator build completed; waiting for full native boot readiness (maximum 600s).", flush=True)
+        command(["xcrun", "simctl", "bootstatus", device_id, "-b"], timeout=600, log=ARTIFACTS / "logs/boot.log")
+        report["simulator"]["bootCompletedAfterSeconds"] = round(time.monotonic() - boot_started, 2)
+        report["simulator"]["bootStatusWaitLimitSeconds"] = 600
+        write_json(ARTIFACTS / "simulator-info.json", report["simulator"])
+        command(["xcrun", "simctl", "status_bar", device_id, "override", "--time", "9:41", "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3", "--batteryState", "charged", "--batteryLevel", "100"], required=False)
         for scenario, appearance, text_size, method, minimum_screenshots in SCENARIOS:
             command(["xcrun", "simctl", "ui", device_id, "appearance", appearance])
             command(["xcrun", "simctl", "ui", device_id, "content_size", text_size])
