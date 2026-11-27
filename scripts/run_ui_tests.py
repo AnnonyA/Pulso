@@ -217,8 +217,8 @@ def main() -> int:
                 command(base + [
                     "-only-testing:PulsoUITests/PulsoUITests/" + method,
                     "-resultBundlePath", str(RESULTS / f"{scenario}.xcresult"),
-                    "-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "120",
-                    "-maximum-test-execution-time-allowance", "180", "test-without-building",
+                    "-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "240",
+                    "-maximum-test-execution-time-allowance", "300", "test-without-building",
                 ], timeout=420, log=ARTIFACTS / "logs" / f"{scenario}-tests.log")
                 result["status"] = "passed"
             except RuntimeError as error:

@@ -49,21 +49,6 @@ jobs:
       - name: Probar modelo de datos y exportacion
         run: swift test --parallel
 
-      - name: Probar UI real en iPhone 11 con iOS 26
-        run: python3 scripts/run_ui_tests.py
-
-      - name: Conservar capturas y resultados nativos
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: Pulso-iPhone11-UI-${{ github.run_number }}
-          path: |
-            build/ui-artifacts/
-            build/ui-results/
-          if-no-files-found: ignore
-          retention-days: 14
-          compression-level: 6
-
       - name: Compilar y verificar IPA de iPhone
         run: bash scripts/build_unsigned_ipa.sh
 
@@ -81,6 +66,21 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+
+      - name: Probar UI real en iPhone 11 con iOS 26
+        run: python3 scripts/run_ui_tests.py
+
+      - name: Conservar capturas y resultados nativos
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Pulso-iPhone11-UI-${{ github.run_number }}
+          path: |
+            build/ui-artifacts/
+            build/ui-results/
+          if-no-files-found: ignore
+          retention-days: 14
+          compression-level: 6
 
       - name: Conservar registro de compilacion
         if: always()

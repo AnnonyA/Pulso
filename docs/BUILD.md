@@ -9,7 +9,7 @@ Pulso 0.2 presenta tres modos, en este orden: **Consultar saldo**, **Historial**
 1. Abrí [Actions de AnnonyA/Pulso](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml) con una cuenta con acceso al proyecto.
 2. Seleccioná **Compilar IPA - iOS 26**. Si ya hay una ejecución correcta para el commit de la versión 0.2 que querés instalar, abrila directamente.
 3. Para compilar de nuevo, elegí **Run workflow**, seleccioná **main** y confirmá **Run workflow**. Los cambios relevantes enviados a main también pueden iniciar el flujo automáticamente.
-4. Esperá el resultado de todas las etapas. Una prueba de interfaz fallida o la ausencia del simulador requerido detienen el flujo antes de producir el IPA de esa ejecución.
+4. Esperá el resultado de todas las etapas para considerar la versión validada. El IPA se compila y publica después de las pruebas de dominio, antes de las pruebas UI; puede estar disponible aunque el simulador falle después. Un artifact IPA por sí solo no confirma que toda la ejecución haya pasado.
 5. En la ejecución correcta, bajá hasta **Artifacts** y descargá **Pulso-iOS26-unsigned-N**, donde N es su número de ejecución.
 6. Extraé el ZIP. El archivo para firmar e instalar es **Pulso-unsigned.ipa**.
 7. Descargá por separado **Pulso-iPhone11-UI-N** para revisar las capturas y los resultados de las pruebas nativas.
@@ -49,15 +49,15 @@ Esta sección describe **las comprobaciones previstas**, no afirma que una ejecu
 1. Seleccionar Xcode 26 o posterior con un SDK de iPhone 26 o posterior.
 2. Validar proyecto, esquemas, configuración NFC, privacidad y recursos.
 3. Ejecutar las **13 pruebas de dominio** con **swift test --parallel**: modos, conservación de la operación solicitada, historial anterior, serialización y privacidad.
-4. Compilar Debug y ejecutar los tres escenarios UI siguientes en un **simulador iPhone 11 con un runtime iOS 26 instalado**.
-5. Compilar Release para dispositivo iPhone, sin firma.
-6. Empaquetar la app real de Xcode y verificar Mach-O, arm64, plataforma iPhoneOS, mínimo iOS 26.0, recursos y manifiesto de privacidad.
+4. Compilar Release para dispositivo iPhone, sin firma.
+5. Empaquetar y publicar la app real de Xcode después de verificar Mach-O, arm64, plataforma iPhoneOS, mínimo iOS 26.0, recursos y manifiesto de privacidad.
+6. Compilar Debug y ejecutar los tres escenarios UI siguientes en un **simulador iPhone 11 con un runtime iOS 26 instalado**. Un fallo mantiene el estado global de la ejecución en rojo, aunque el IPA ya esté publicado.
 
 ### Tres escenarios de interfaz nativa
 
 | Escenario | Comprobaciones previstas | Capturas previstas |
 | --- | --- | --- |
-| Claro | Orden y selección de los tres modos, títulos y límites, respuesta real de NFC no disponible en simulador, modo predeterminado al reiniciar y menú. | Consultar saldo, Historial, Acreditar carga y estado después de reiniciar. |
+| Claro | Orden y selección de los tres modos, títulos y límites, respuesta real de NFC no disponible en simulador, modo predeterminado al reiniciar y menú. | Los tres modos, NFC no disponible y estado después de reiniciar. |
 | Oscuro | Inicio y modo predeterminado con apariencia oscura del sistema. | Consultar saldo en oscuro. |
 | Texto grande | Modo predeterminado y cambio a Historial con texto de accesibilidad. | Consultar saldo e Historial con texto grande. |
 
@@ -107,7 +107,7 @@ El **UID no es el número impreso de SUBE**. Detectar MIFARE Plus no verifica qu
 | No aparece Run workflow | Abrí el workflow de AnnonyA/Pulso con permiso para ejecutarlo y comprobá que exista en la rama predeterminada. |
 | La ejecución no inicia | Revisá si Actions está habilitado y si hay cuota disponible. |
 | Falta iOS 26 o el tipo de dispositivo iPhone 11 | Consultá el inventario y logs de la etapa UI. Son requisitos explícitos de las pruebas. |
-| Falla una prueba UI | Descargá Pulso-iPhone11-UI-N y revisá escenario, .xcresult, capturas y logs. Esa ejecución no genera IPA mientras falle la etapa. |
+| Falla una prueba UI | Descargá Pulso-iPhone11-UI-N y revisá escenario, .xcresult, capturas y logs. La ejecución no está validada; el IPA publicado antes de esa etapa conserva únicamente las comprobaciones de modelo, compilación y paquete. |
 | Error de Swift | Consultá la etapa roja: el build de simulador tiene logs en el artifact UI; el de dispositivo, en Pulso-build-log-N si existe. |
 | No aparece el artifact IPA | Verificá que la ejecución completa haya terminado correctamente. Puede haber evidencia UI aunque el empaquetado nunca haya comenzado. |
 | El IPA no se instala | Está sin firmar: necesitás firma, perfil y dispositivo autorizados según tu método. |

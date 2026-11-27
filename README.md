@@ -1,6 +1,6 @@
 # Pulso para SUBE
 
-**Lector NFC nativo para iPhone, con iOS 26.0 como versión mínima.** Creado para probar qué información pública puede obtener el iPhone de tu tarjeta SUBE, con una interfaz en español y sin autenticación.
+**Lector NFC nativo para iPhone, con iOS 26.0 como versión mínima.** Creado para probar qué información pública puede obtener el iPhone de tu tarjeta SUBE, con una interfaz en español y sin inicio de sesión.
 
 El proyecto usa Swift 6, SwiftUI y Core NFC. No requiere backend ni dependencias de terceros para compilar la app.
 
@@ -14,7 +14,7 @@ La pantalla principal sigue la referencia visual de SUBE: encabezado azul, tres 
 2. **Historial** corresponde a los viajes de transporte.
 3. **Acreditar carga** corresponde a la intención de acreditar una recarga.
 
-Los tres modos permiten iniciar una sesión NFC real para identificar una tarjeta que iOS pueda detectar. En esta versión sin autenticación, el saldo, los viajes y las acreditaciones **no están disponibles**. La app explica ese estado antes de leer y al mostrar el resultado; no muestra saldos, viajes o acreditaciones ficticias.
+Los tres modos permiten iniciar una sesión NFC real para identificar una tarjeta que iOS pueda detectar. El acceso a los datos y las operaciones protegidas de SUBE todavía no está implementado: el saldo, los viajes y las acreditaciones **no están disponibles**. La app explica ese estado antes de leer y al mostrar el resultado; no muestra saldos, viajes o acreditaciones ficticias. La ausencia de una cuenta de usuario no reemplaza la autorización técnica que exige la tarjeta.
 
 El menú reúne el registro local de **lecturas NFC**, los ajustes y la ayuda. Las lecturas guardadas están separadas del modo Historial de viajes.
 
