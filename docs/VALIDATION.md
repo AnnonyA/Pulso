@@ -8,15 +8,79 @@ Un usuario instaló la app en un iPhone 11 físico y recibió un aviso de simula
 
 La corrección separa entorno compilado, disponibilidad y errores de sesión, y agrega un diagnóstico compartible incluso sin tarjeta. No se atribuye el estado negativo automáticamente a la firma ni se intenta forzar una sesión cuando Core NFC no la ofrece.
 
-**Validación de 0.2.1 pendiente de su ejecución de CI.** Se agregan regresiones del diagnóstico y comprobación de acceso a la pantalla de diagnóstico después de un intento sin tarjeta. El informe de la ejecución correcta, el nuevo IPA y sus huellas se incorporarán al completar esas comprobaciones.
+**La ejecución #9 terminó correctamente: pasaron las 24 pruebas de dominio, la compilación Release, la verificación del IPA y los tres escenarios de interfaz.** El IPA de 0.2.1 está descargado y verificado, y la PR #2 se integró en `main` con el mismo árbol de código validado. La instalación firmada y la lectura de una SUBE física siguen pendientes.
 
-La lectura de la SUBE física y la autorización NFC de la instalación del usuario aún necesitan comprobarse. El síntoma reportado permite confirmar el mensaje erróneo; no permite determinar por sí solo la causa de indisponibilidad.
+### Procedencia actual: ejecución #9
+
+| Dato | Valor confirmado |
+| --- | --- |
+| Repositorio y PR | [AnnonyA/Pulso](https://github.com/AnnonyA/Pulso), [PR #2](https://github.com/AnnonyA/Pulso/pull/2). |
+| Ejecución | [GitHub Actions #9](https://github.com/AnnonyA/Pulso/actions/runs/46057433338). |
+| Commit de origen | [3910fc244c2a032863e97359fd23f9f3128f58fb](https://github.com/AnnonyA/Pulso/commit/3910fc244c2a032863e97359fd23f9f3128f58fb). |
+| Árbol de origen | `3166636322b594ddcede62a8e54b01db065a6dec`. |
+| Versión / build inspeccionados | **0.2.1 / 3**. |
+| Compilador | Xcode 26.6 / Apple Swift 6.3.3. |
+| Plataforma y arquitectura | iPhoneOS, ejecutable Mach-O arm64. |
+| Sistema mínimo / SDK | iOS **26.0** / iPhoneOS **26.5**. |
+| Simulador de interfaz | iPhone 11 / iOS 26.5, build 23F77. |
+| Configuración y firma | Release, **sin firmar**; necesita firma posterior y un perfil que permita NFC TAG. |
+| Artifact del IPA | [Pulso-iOS26-unsigned-9](https://github.com/AnnonyA/Pulso/actions/runs/46057433338/artifacts/15226814351). |
+| Integración en main | **Completada** mediante squash de la PR #2: [4bf7560e23f2190b6c486757d0a9a9776d13e544](https://github.com/AnnonyA/Pulso/commit/4bf7560e23f2190b6c486757d0a9a9776d13e544). |
+
+Se verificó que el árbol del commit integrado coincide exactamente con el de la rama probada: `3166636322b594ddcede62a8e54b01db065a6dec`. La actualización posterior de estas notas y capturas modifica únicamente documentación; no cambia el código de la app ni los scripts y pruebas de esa ejecución.
+
+### Integridad de los archivos de 0.2.1
+
+| Archivo | Tamaño | SHA-256 |
+| --- | --- | --- |
+| Pulso-unsigned.ipa | 552.380 bytes | `0757c424d4e45483eb43bd6d04b202a1509c34e68a7f94edb636125e1d14ca32` |
+| ZIP del artifact del IPA | 560.654 bytes | `bd19d1cdd80cf530e2fcd9ef46f77474b10c14294e1d5603128d68a78f69fc18` |
+| ZIP del artifact de interfaz | 5.457.873 bytes | `95631b0f7c0c505742b0ba0ccdd017f2cd41ed68914c892627a05e1265a6213d` |
+
+Las huellas corresponden a los archivos de la ejecución #9. Volver a compilar o firmar el IPA puede cambiar su huella.
+
+### Estado de las comprobaciones de 0.2.1
+
+| Comprobación | Estado observado |
+| --- | --- |
+| Pruebas de dominio | **24 de 24 aprobadas.** |
+| Compilación Release, empaquetado y verificación del IPA | **Aprobados.** |
+| Inspección del IPA descargado | **Confirmada:** versión 0.2.1, build 3, arm64, iPhoneOS, mínimo 26.0 y SDK 26.5. |
+| Pruebas UI de la ejecución #9 | **3 de 3 escenarios aprobados.** |
+| Capturas nativas de la ejecución #9 | **12 originales de 828 × 1792 píxeles.** |
+| Captura de Diagnóstico NFC | **Inspeccionada.** Original nativo de XCTest, con procedencia documentada. |
+| Merge de la PR #2 y comprobación del árbol integrado | **Completados.** Árbol idéntico al validado. |
+| Permisos NFC de la instalación y lectura de una SUBE física | **No comprobados por esta ejecución.** |
+
+Las nuevas regresiones cubren la distinción entre dispositivo físico y simulador, la conservación del error original y el diagnóstico sin tarjeta. La comprobación UI aprobada incluye acceder al diagnóstico después de un intento sin tarjeta.
+
+La corrección elimina el mensaje falso de simulador en dispositivo físico; **no valida los entitlements de la instalación, la antena ni la detección de la SUBE del usuario, y no agrega saldo, viajes o acreditación de cargas**. El síntoma reportado permite confirmar el mensaje erróneo; no permite determinar por sí solo la causa de indisponibilidad.
+
+### Interfaz nativa de 0.2.1: ejecución #9 aprobada
+
+XCTest ejecutó los tres escenarios en un **simulador iPhone 11 con iOS 26.5, build 23F77**:
+
+| Escenario | Resultado | Capturas originales |
+| --- | --- | --- |
+| Claro, incluido el diagnóstico NFC | **Aprobado.** | 7 |
+| Oscuro | **Aprobado.** | 2 |
+| Texto de accesibilidad | **Aprobado.** | 3 |
+
+El artifact [Pulso-iPhone11-UI-9](https://github.com/AnnonyA/Pulso/actions/runs/46057433338/artifacts/15228131466) conserva las **12 capturas originales de 828 × 1792 píxeles**, los resúmenes, los resultados .xcresult y los logs. Su tamaño y SHA-256 figuran en la tabla de integridad de esta versión.
+
+La [captura de Diagnóstico NFC](screenshots/diagnostico-nfc.png) fue inspeccionada y se conserva con su [procedencia y huella](screenshots/provenance-nfc-0.2.1.json). Es una captura de la app nativa ejecutada por XCTest en el simulador: por eso el diagnóstico identifica correctamente el entorno como **simulador**. Esta imagen verifica la presentación del diagnóstico en ese entorno; no demuestra el funcionamiento de la antena ni una lectura de SUBE física.
+
+### Antecedente parcial de 0.2.1: ejecución #8
+
+La [ejecución #8](https://github.com/AnnonyA/Pulso/actions/runs/46056036957), sobre el commit `d214e132c61b2c8649fa377883b2714e6a2101e0`, aprobó **24 pruebas de dominio** y el escenario **claro, incluido el diagnóstico NFC**. El escenario oscuro falló al agotar una espera de 5 segundos para la comprobación del estado de accesibilidad, aunque el registro y el árbol de accesibilidad mostraban la selección correcta. **El escenario de texto grande no se ejecutó**; no se considera aprobada esa ejecución completa.
+
+El único cambio posterior para la ejecución #9 amplía esa espera de prueba de **5 a 15 segundos**. Conserva la misma comprobación del estado seleccionado y no cambia el código de la app. La evidencia de aprobación de esta entrega es la ejecución #9 completa, con sus tres escenarios aprobados.
 
 ## Entrega anterior: 0.2.0, build 2
 
 **La ejecución #6 terminó correctamente: pasaron las 13 pruebas de dominio y los tres escenarios de interfaz nativa. El IPA de la versión 0.2.0, build 2, está compilado y verificado.** La instalación firmada y la lectura de una SUBE física siguen pendientes.
 
-## Procedencia de esta compilación
+### Procedencia de la compilación 0.2.0
 
 | Dato | Valor confirmado |
 | --- | --- |
@@ -38,7 +102,7 @@ El resultado completo de la ejecución está confirmado en sus jobs y logs. Tant
 
 La [PR #1](https://github.com/AnnonyA/Pulso/pull/1) se integró en **main** mediante el commit [7676268ed469038ebd46edf666b130f12ad11125](https://github.com/AnnonyA/Pulso/commit/7676268ed469038ebd46edf666b130f12ad11125). Se verificó que su árbol Git es exactamente el de la rama validada: `8abcf54d839b3ad048090274baae0b1163ebb0d6`. La incorporación posterior de estas notas y capturas modifica únicamente documentación; no cambia el código de la aplicación ni los scripts probados.
 
-## Integridad de los archivos
+### Integridad de los archivos de 0.2.0
 
 Las huellas siguientes corresponden exactamente al artifact y al IPA de la ejecución #6.
 
@@ -61,7 +125,7 @@ SHA-256 del ZIP del artifact:
 
 El IPA fue verificado como binario de dispositivo arm64 con mínimo iOS 26.0. Una nueva compilación puede cambiar estas huellas. Volver a firmar el IPA también cambia su huella.
 
-## Verificaciones confirmadas de la versión 0.2
+### Verificaciones confirmadas de la versión 0.2.0
 
 | Comprobación | Estado |
 | --- | --- |
@@ -82,7 +146,7 @@ En la versión 0.2, el callback NFC recupera la sesión y su etiqueta conectada 
 
 La compilación Release no emitió las advertencias de capturas `Sendable` de la versión anterior. El único aviso de Release fue la omisión de extracción de metadatos de App Intents porque la app no utiliza ese framework.
 
-## Interfaz nativa: ejecución #6 aprobada
+### Interfaz nativa de 0.2.0: ejecución #6 aprobada
 
 XCTest ejecutó los tres escenarios en un **simulador iPhone 11 con iOS 26.5, build 23F77**. Los tres terminaron correctamente:
 
@@ -134,4 +198,4 @@ El simulador no realiza estas pruebas NFC. Una instalación correcta tampoco agr
 
 La [ejecución #1](https://github.com/AnnonyA/Pulso/actions/runs/45969338666), sobre el commit 46928c7e17f14be549e2f5b118fb59ffbb378600, produjo el primer IPA 0.1.0, build 1, y aprobó siete pruebas de dominio.
 
-Esa compilación, su interfaz anterior, sus observaciones del compilador y su maqueta pertenecen a la versión 0.1. No son evidencia de validación de Pulso 0.2 y no deben confundirse con los archivos, huellas ni resultados documentados arriba.
+Esa compilación, su interfaz anterior, sus observaciones del compilador y su maqueta pertenecen a la versión 0.1. No son evidencia de validación de Pulso 0.2.1 y no deben confundirse con los archivos, huellas ni resultados documentados arriba.

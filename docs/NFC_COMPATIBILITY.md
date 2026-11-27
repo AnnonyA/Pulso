@@ -34,7 +34,7 @@ No se incluyeron identificadores de aplicaciones ISO 7816 supuestos. Sin AIDs do
 
 La app utiliza `com.apple.developer.nfc.readersession.formats = ["TAG"]`. El perfil debe autorizar la capacidad y la firma de la app debe reclamarla. El archivo de entitlements incluido como referencia en el ZIP no la concede. Una app que abre correctamente puede seguir sin disponer de una capacidad que no quedó habilitada durante la firma.
 
-La [tabla de Apple](https://developer.apple.com/help/account/reference/supported-capabilities-ios) marca NFC Tag Reading para Apple Developer Program y Enterprise Program, pero no para Apple Developer gratuito / Personal Team. Si se utilizó una cuenta gratuita, es un punto concreto que revisar; no demuestra qué cuenta o perfil se usó en la instalación del usuario.
+La [tabla de Apple](https://developer.apple.com/help/account/reference/supported-capabilities-ios) marca NFC Tag Reading para Apple Developer Program y Enterprise Program, pero no para la columna gratuita Apple Developer. [Apple DTS explica](https://developer.apple.com/forums/thread/821896) que esa columna corresponde al aprovisionamiento gratuito llamado Personal Team en Xcode. Si se utilizó una cuenta gratuita, es un punto concreto que revisar; no demuestra qué cuenta o perfil se usó en la instalación del usuario.
 
 Apple describe `readerErrorSecurityViolation` como una violación de seguridad asociada a la sesión. Ese error justifica revisar firma y permisos, pero no identifica automáticamente qué parte de la instalación falló. El diagnóstico debe conservar el error observado y separar las causas posibles de las confirmadas.
 

@@ -1,0 +1,46 @@
+{
+  "origin": "Original XCTest screenshot, copied without image editing",
+  "runURL": "https://github.com/AnnonyA/Pulso/actions/runs/46057433338",
+  "headCommit": "3910fc244c2a032863e97359fd23f9f3128f58fb",
+  "sourceTree": "3166636322b594ddcede62a8e54b01db065a6dec",
+  "mergeCommit": "4bf7560e23f2190b6c486757d0a9a9776d13e544",
+  "artifactID": 15228131466,
+  "artifactSHA256": "95631b0f7c0c505742b0ba0ccdd017f2cd41ed68914c892627a05e1265a6213d",
+  "device": "iPhone 11 simulator",
+  "runtime": "iOS 26.5 (23F77)",
+  "physicalNFCTest": false,
+  "domainTestsPassed": 24,
+  "nativeScenariosPassed": 3,
+  "nativeScreenshotsInArtifact": 12,
+  "scenarios": [
+    {
+      "name": "light",
+      "status": "passed",
+      "screenshots": 7,
+      "contentSize": "large"
+    },
+    {
+      "name": "dark",
+      "status": "passed",
+      "screenshots": 2,
+      "contentSize": "large"
+    },
+    {
+      "name": "large-text",
+      "status": "passed",
+      "screenshots": 3,
+      "contentSize": "accessibility-extra-extra-extra-large"
+    }
+  ],
+  "selectedScreenshots": [
+    {
+      "file": "diagnostico-nfc.png",
+      "scenario": "light",
+      "sourceFile": "ui-artifacts/screenshots/light-04-03c-nfc-diagnostics-without-card_0_985D0E16-EE5B-4AF4-9D37-FEC392A8F16E.png.png",
+      "width": 828,
+      "height": 1792,
+      "bytes": 162932,
+      "sha256": "7e9bab03da5c1ba95a2480e8d7c89f999172c6002c69f279051e26ab76c9f5df"
+    }
+  ]
+}

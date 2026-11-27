@@ -14,6 +14,8 @@ La versión **0.2.1, build 3**, corrige el mensaje que identificaba erróneament
 
 El workflow de [GitHub Actions](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml) genera **Pulso-unsigned.ipa** para dispositivo arm64, con **iOS 26.0 como mínimo**. Las notas de [validación](docs/VALIDATION.md) registran la ejecución exacta de cada entrega. No hace falta compilar en Windows.
 
+La compilación **0.2.1, build 3**, está disponible en [Pulso-iOS26-unsigned-9](https://github.com/AnnonyA/Pulso/actions/runs/46057433338/artifacts/15226814351). **La ejecución #9 terminó correctamente:** pasaron las 24 pruebas de dominio, la compilación Release, la verificación del IPA y los tres escenarios de interfaz. La [PR #2](https://github.com/AnnonyA/Pulso/pull/2) ya está integrada en `main`, con el mismo árbol de código validado.
+
 El IPA está **sin firmar**: para usar NFC, la firma y el perfil de instalación deben permitir la capacidad NFC TAG. El paquete no incluye certificados ni credenciales de Apple.
 
 **Esta versión detecta únicamente los metadatos públicos de tarjetas compatibles con Core NFC. No consulta el saldo real, no obtiene viajes protegidos y no acredita cargas.** Los tres modos explican estos límites; no hay resultados simulados. Ver [compatibilidad y alcance NFC](docs/NFC_COMPATIBILITY.md).
@@ -41,6 +43,8 @@ Estas imágenes documentan el diseño de **0.2.0**, obtenido en la ejecución co
 | ![Consultar saldo](docs/screenshots/consultar-saldo.png) | ![Historial](docs/screenshots/historial.png) | ![Acreditar carga](docs/screenshots/acreditar-carga.png) |
 
 También están las capturas de [modo oscuro](docs/screenshots/oscuro.png) y [texto de accesibilidad](docs/screenshots/texto-grande.png), junto con su [procedencia y huellas](docs/screenshots/provenance.json). A tamaños de accesibilidad, los modos pasan a una lista vertical y la pantalla se puede desplazar.
+
+La [captura de Diagnóstico NFC de 0.2.1](docs/screenshots/diagnostico-nfc.png) procede de la ejecución #9 y fue inspeccionada como evidencia de la interfaz nativa. Muestra **simulador** porque XCTest ejecutó la app en un simulador iPhone 11 con iOS 26.5; ese texto describe correctamente el entorno de la captura. Su [procedencia y huella](docs/screenshots/provenance-nfc-0.2.1.json) la vinculan con esa ejecución. No documenta una lectura física de SUBE.
 
 ## Generar el `.ipa` desde Windows 10
 
@@ -105,7 +109,19 @@ docs/BUILD.md            Guía para Windows y firma
 
 ## Estado de validación
 
-La corrección **0.2.1** incorpora regresiones para distinguir un dispositivo con NFC no disponible de un simulador, conservar el error original y ofrecer un diagnóstico sin tarjeta. Su compilación y sus resultados se documentarán con la ejecución correspondiente; las comprobaciones de 0.2.0 no validan automáticamente el cambio.
+La corrección **0.2.1** incorpora regresiones para distinguir un dispositivo con NFC no disponible de un simulador, conservar el error original y ofrecer un diagnóstico sin tarjeta. La [ejecución #9](https://github.com/AnnonyA/Pulso/actions/runs/46057433338), sobre el commit `3910fc244c2a032863e97359fd23f9f3128f58fb`, tiene este estado:
+
+| Comprobación de 0.2.1 | Estado |
+| --- | --- |
+| Pruebas de dominio y compilación Release | **24 de 24 pruebas aprobadas; Release completada.** |
+| IPA descargado e inspeccionado | **0.2.1, build 3; Mach-O arm64, iPhoneOS, mínimo iOS 26.0, SDK 26.5, sin firmar.** |
+| Pruebas de interfaz | **3 de 3 escenarios aprobados:** claro, oscuro y texto grande, en iPhone 11 / iOS 26.5. |
+| Capturas nativas | **12 originales de 828 × 1792 píxeles**; captura de Diagnóstico NFC inspeccionada. |
+| Integración de la PR #2 en main | **Completada:** [4bf7560e23f2190b6c486757d0a9a9776d13e544](https://github.com/AnnonyA/Pulso/commit/4bf7560e23f2190b6c486757d0a9a9776d13e544), con árbol idéntico al validado. |
+
+[docs/VALIDATION.md](docs/VALIDATION.md) conserva las huellas, la procedencia y los resultados completos. El artifact [Pulso-iPhone11-UI-9](https://github.com/AnnonyA/Pulso/actions/runs/46057433338/artifacts/15228131466) contiene las 12 capturas, los resultados XCTest y los logs. Corregir el mensaje de simulador no comprueba los permisos NFC de la instalación, la antena ni la detección de una SUBE física: esa prueba sigue pendiente. Tampoco incorpora lectura de saldo, viajes o acreditación de cargas. La evidencia actual corresponde a #9; las capturas de 0.2.0 conservadas más arriba documentan aquella versión.
+
+Como antecedente parcial, la ejecución #8 aprobó 24 pruebas de dominio y el escenario claro con diagnóstico; el oscuro agotó una espera de 5 segundos y el texto grande no se ejecutó. Para #9 solo se amplió esa espera a 15 segundos, manteniendo la comprobación y el código de la app. La ejecución #9 completa es la evidencia de aprobación de esta entrega.
 
 ### Antecedente: 0.2.0
 
