@@ -10,6 +10,7 @@ enum PulsoTheme {
     static let ink = adaptive(light: 0x263944, dark: 0xEFF7FA)
     static let secondary = adaptive(light: 0x586873, dark: 0xB4C6D1)
     static let accent = adaptive(light: 0x007EAE, dark: 0x83D6F2)
+    static let onAccent = adaptive(light: 0xFFFFFF, dark: 0x07314A)
     static let headerBlue = Color(red: 0, green: 126.0 / 255, blue: 174.0 / 255)
     static let orange = adaptive(light: 0xED8C15, dark: 0xFFB349)
     static let selectedText = adaptive(light: 0x9D4D00, dark: 0xFFCB86)
@@ -138,6 +139,7 @@ struct PrimaryScanButton: View {
         Button(action: action) {
             Label(title, systemImage: "wave.3.right")
                 .font(.headline)
+                .foregroundStyle(PulsoTheme.onAccent)
                 .frame(maxWidth: .infinity, minHeight: 34)
                 .padding(.vertical, 6)
         }

@@ -8,15 +8,23 @@ final class PulsoUITests: XCTestCase {
         app.launchArguments = ["-pulso-ui-testing", "-pulso-skip-onboarding"]
         app.launch()
         XCTAssertTrue(app.staticTexts["reader.mode.title"].waitForExistence(timeout: 15))
+        // Keep the complete native hierarchy and screen even if the first
+        // selector assertion fails; a missing-element query alone is ambiguous.
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "AX-on-launch"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        capture("00-launch-before-selection-check")
         return app
     }
 
     @MainActor
     private func assertSelected(_ mode: String, title: String, in app: XCUIApplication) {
         let selected = app.buttons["mode.\(mode)"]
+        XCTAssertTrue(selected.waitForExistence(timeout: 5), "Expected an accessible Button with identifier mode.\(mode). See AX-on-launch.")
         let predicate = NSPredicate(format: "value == %@", "Seleccionado")
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: selected)
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed, "Unexpected accessibility value: \(String(describing: selected.value))")
         XCTAssertEqual(app.staticTexts["reader.mode.title"].label, title)
         for otherMode in ["balance", "trips", "topUp"] where otherMode != mode {
             XCTAssertEqual(app.buttons["mode.\(otherMode)"].value as? String, "No seleccionado")

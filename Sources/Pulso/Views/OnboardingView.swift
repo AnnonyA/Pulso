@@ -55,6 +55,7 @@ struct OnboardingView: View {
                         Image(systemName: "arrow.right")
                     }
                     .font(.headline)
+                    .foregroundStyle(PulsoTheme.onAccent)
                     .padding(.vertical, 12)
                     .padding(.horizontal, 6)
                 }

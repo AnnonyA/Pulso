@@ -246,6 +246,7 @@ struct DiagnosticExportView: View {
                     ) {
                         Label("Compartir archivo JSON", systemImage: "square.and.arrow.up")
                             .font(.headline)
+                            .foregroundStyle(PulsoTheme.onAccent)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                     }

@@ -85,6 +85,7 @@ struct DashboardView: View {
             ToolbarItem(placement: .topBarLeading) {
                 utilityMenu
             }
+            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .principal) {
                 HStack(alignment: .firstTextBaseline, spacing: 7) {
                     Text("Pulso")
@@ -172,6 +173,7 @@ struct DashboardView: View {
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .tint(.white)
         .disabled(store.phase.isActive)
         .accessibilityLabel("Abrir menú")
@@ -279,7 +281,9 @@ private struct ReaderModeButton: View {
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
-        .accessibilityElement(children: .ignore)
+        // Keep Button's native accessibility element and activation action.
+        // `children: .ignore` would replace it with an untyped synthetic element.
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel(mode.title)
         .accessibilityValue(isSelected ? "Seleccionado" : "No seleccionado")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
