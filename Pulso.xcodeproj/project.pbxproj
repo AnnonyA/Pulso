@@ -9,6 +9,7 @@
 		A00000000000000000000001 /* Pulso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pulso.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A00000000000000000000003 /* Pulso.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Pulso.entitlements; sourceTree = "<group>"; };
+		A00000000000000000000101 /* PulsoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PulsoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -17,16 +18,22 @@
 			path = Sources/Pulso;
 			sourceTree = "<group>";
 		};
+		A00000000000000000000110 /* PulsoUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests/PulsoUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A00000000000000000000020 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A00000000000000000000120 /* UI Test Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		A00000000000000000000030 = {
 			isa = PBXGroup;
-			children = (A00000000000000000000010 /* Pulso */, A00000000000000000000031 /* Config */, A00000000000000000000032 /* Products */);
+			children = (A00000000000000000000010 /* Pulso */, A00000000000000000000110 /* PulsoUITests */, A00000000000000000000031 /* Config */, A00000000000000000000032 /* Products */);
 			sourceTree = "<group>";
 		};
 		A00000000000000000000031 /* Config */ = {
@@ -35,7 +42,7 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
-		A00000000000000000000032 /* Products */ = {isa = PBXGroup; children = (A00000000000000000000001 /* Pulso.app */); name = Products; sourceTree = "<group>"; };
+		A00000000000000000000032 /* Products */ = {isa = PBXGroup; children = (A00000000000000000000001 /* Pulso.app */, A00000000000000000000101 /* PulsoUITests.xctest */); name = Products; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -52,6 +59,19 @@
 			productReference = A00000000000000000000001 /* Pulso.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A00000000000000000000140 /* PulsoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000171 /* Build configuration list for PBXNativeTarget "PulsoUITests" */;
+			buildPhases = (A00000000000000000000121 /* UI Test Sources */, A00000000000000000000120 /* UI Test Frameworks */, A00000000000000000000122 /* UI Test Resources */);
+			buildRules = ();
+			dependencies = (A00000000000000000000181 /* PBXTargetDependency */);
+			fileSystemSynchronizedGroups = (A00000000000000000000110 /* PulsoUITests */);
+			name = PulsoUITests;
+			packageProductDependencies = ();
+			productName = PulsoUITests;
+			productReference = A00000000000000000000101 /* PulsoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -66,6 +86,10 @@
 						CreatedOnToolsVersion = 26.0;
 						SystemCapabilities = {com.apple.NearFieldCommunicationTagReading = {enabled = 1; }; };
 					};
+					A00000000000000000000140 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = A00000000000000000000040;
+					};
 				};
 			};
 			buildConfigurationList = A00000000000000000000070 /* Build configuration list for PBXProject "Pulso" */;
@@ -78,17 +102,37 @@
 			productRefGroup = A00000000000000000000032 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (A00000000000000000000040 /* Pulso */);
+			targets = (A00000000000000000000040 /* Pulso */, A00000000000000000000140 /* PulsoUITests */);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A00000000000000000000022 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A00000000000000000000122 /* UI Test Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A00000000000000000000021 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A00000000000000000000121 /* UI Test Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000180 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000050 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000040;
+			remoteInfo = Pulso;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		A00000000000000000000181 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000040 /* Pulso */;
+			targetProxy = A00000000000000000000180 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A00000000000000000000060 /* Debug */ = {
@@ -138,13 +182,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Config/Pulso.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Config/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.pulso.nfcreader;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -165,12 +209,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Config/Pulso.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Config/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.pulso.nfcreader;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -184,11 +228,54 @@
 			};
 			name = Release;
 		};
+		A00000000000000000000162 /* UI Test Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks");
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.pulso.nfcreader.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Pulso;
+			};
+			name = Debug;
+		};
+		A00000000000000000000163 /* UI Test Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks");
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.pulso.nfcreader.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Pulso;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
 		A00000000000000000000070 /* Build configuration list for PBXProject "Pulso" */ = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000060 /* Debug */, A00000000000000000000061 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		A00000000000000000000071 /* Build configuration list for PBXNativeTarget "Pulso" */ = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000062 /* Debug */, A00000000000000000000063 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A00000000000000000000171 /* Build configuration list for PBXNativeTarget "PulsoUITests" */ = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000162 /* UI Test Debug */, A00000000000000000000163 /* UI Test Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A00000000000000000000050 /* Project object */;

@@ -5,16 +5,25 @@ struct HelpView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 Eyebrow(text: "Una buena primera lectura")
-                Text("Acercá.\nMantené.\nDescubrí.")
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                Text("Cómo acercar\ntu SUBE")
+                    .font(.largeTitle.weight(.bold))
                 Text("El lector está en la parte superior del iPhone. Probá con una sola tarjeta y mantenela cerca hasta que termine la sesión.")
                     .font(.body)
                     .foregroundStyle(PulsoTheme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                NFCPlacementIllustration()
-                    .frame(height: 210)
+                NFCPlacementIllustration(compact: true)
 
                 VStack(alignment: .leading, spacing: 21) {
+                    HelpItem(
+                        title: "Tres opciones, una tarjeta",
+                        text: "La pantalla empieza en Consultar saldo. También podés elegir Historial para los viajes o Acreditar carga. Tocá Iniciar lectura una sola vez para abrir el lector NFC de iOS. En esta versión las tres opciones intentan detectar un chip compatible; las funciones protegidas todavía no están disponibles."
+                    )
+                    Divider()
+                    HelpItem(
+                        title: "Historial de viajes y lecturas NFC",
+                        text: "La opción Historial de la pantalla principal se refiere a viajes, que todavía no se pueden leer. En el menú, Historial de lecturas NFC guarda únicamente cuándo escaneaste una tarjeta y qué metadatos expuso su chip."
+                    )
+                    Divider()
                     HelpItem(
                         title: "No encuentra mi tarjeta",
                         text: "Retirá la funda si tiene metal o imanes, separá otras tarjetas y apoyá la SUBE cerca del borde superior trasero. Algunos protocolos, como MIFARE Classic, no son compatibles con Core NFC. Que la sesión termine sin detectar una tarjeta no significa que esté dañada."

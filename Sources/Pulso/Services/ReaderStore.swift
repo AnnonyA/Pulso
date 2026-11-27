@@ -11,6 +11,8 @@ final class ReaderStore {
     private(set) var latestScan: ScanRecord?
     private(set) var scans: [ScanRecord] = []
     private(set) var historyNotice: String?
+    private(set) var selectedMode: ReaderMode = .defaultMode
+    private(set) var currentResult: ModeScanResult?
 
     var keepHistory: Bool {
         didSet {
@@ -36,7 +38,7 @@ final class ReaderStore {
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let historyURL: URL?
-    @ObservationIgnored private var activeRequestID: UUID?
+    @ObservationIgnored private var activeRequest: ScanRequest?
     @ObservationIgnored private var reader: NFCReader?
 
     private enum Keys {
@@ -70,6 +72,7 @@ final class ReaderStore {
 
     func startScan() {
         guard !phase.isActive else { return }
+        currentResult = nil
         guard isNFCAvailable else {
             phase = .failed("Para leer tu tarjeta necesitás un iPhone físico con NFC. El simulador permite recorrer la app, pero no escanear.")
             return
@@ -80,51 +83,64 @@ final class ReaderStore {
                 self?.receive(event, for: requestID)
             }
         }
-        let requestID = UUID()
-        activeRequestID = requestID
+        let request = ScanRequest(mode: selectedMode)
+        activeRequest = request
         phase = .scanning
-        reader?.start(requestID: requestID)
+        reader?.start(requestID: request.id)
     }
 
     /// Also called when the app actually enters the background, never merely
     /// when it becomes inactive while presenting Apple's NFC system sheet.
     func cancelScan() {
-        guard let requestID = activeRequestID else { return }
-        activeRequestID = nil
+        guard let request = activeRequest else { return }
+        activeRequest = nil
         phase = .cancelled
-        reader?.cancel(requestID: requestID)
+        reader?.cancel(requestID: request.id)
+    }
+
+    func selectMode(_ mode: ReaderMode) {
+        guard !phase.isActive else { return }
+        selectedMode = mode
+        currentResult = nil
+        phase = .idle
     }
 
     func resetState() {
         guard !phase.isActive else { return }
+        currentResult = nil
         phase = .idle
     }
 
     func clearHistory() {
         scans.removeAll()
         latestScan = nil
+        currentResult = nil
         removeStoredHistory()
     }
 
     func deleteScan(id: UUID) {
         scans.removeAll { $0.id == id }
         if latestScan?.id == id { latestScan = scans.first }
+        if currentResult?.id == id { currentResult = nil }
         persistHistory()
     }
 
     private func receive(_ event: NFCReaderEvent, for requestID: UUID) {
-        guard activeRequestID == requestID else { return }
+        guard let request = activeRequest, request.id == requestID else { return }
         switch event {
         case .phase(let phase):
             self.phase = phase
             if !phase.isActive {
-                activeRequestID = nil
+                activeRequest = nil
                 if case .failed = phase, hapticsEnabled {
                     UINotificationFeedbackGenerator().notificationOccurred(.error)
                 }
             }
-        case .record(let record):
-            activeRequestID = nil
+        case .record(let detectedRecord):
+            let result = request.result(from: detectedRecord)
+            let record = result.record
+            activeRequest = nil
+            currentResult = result
             latestScan = record
             phase = .completed
             if keepHistory {
@@ -133,7 +149,8 @@ final class ReaderStore {
                 persistHistory()
             }
             if hapticsEnabled {
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                // A neutral acknowledgment of contact, not a payment success.
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
         }
     }

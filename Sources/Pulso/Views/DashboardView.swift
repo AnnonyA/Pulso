@@ -2,232 +2,391 @@ import SwiftUI
 
 struct DashboardView: View {
     @Environment(ReaderStore.self) private var store
-    @State private var showingScanner = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var utilityRoute: UtilityRoute?
+    @State private var technicalRecord: ScanRecord?
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                header
-                PhysicalCardView(record: store.latestScan)
+            VStack(spacing: 0) {
+                modePicker
+                    .padding(.top, 20)
+                    .padding(.bottom, 14)
 
-                VStack(spacing: 12) {
-                    PrimaryScanButton(
-                        title: store.latestScan == nil ? "Escanear tarjeta" : "Volver a escanear",
-                        isDisabled: store.phase.isActive
-                    ) {
-                        store.resetState()
-                        showingScanner = true
+                Divider()
+                    .overlay(PulsoTheme.line)
+
+                Text(store.selectedMode.title)
+                    .font(.headline)
+                    .foregroundStyle(PulsoTheme.ink)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 17)
+                    .accessibilityIdentifier("reader.mode.title")
+                    .accessibilityAddTraits(.isHeader)
+
+                if let result = store.currentResult {
+                    OperationResultView(result: result) {
+                        technicalRecord = result.record
                     }
-                    Text("Apoyá la tarjeta en la parte superior del iPhone.")
-                        .font(.caption)
-                        .foregroundStyle(PulsoTheme.secondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                }
+                    .padding(.top, 25)
+                    .padding(.bottom, 26)
+                } else {
+                    NFCPlacementIllustration(compact: true)
+                        .padding(.top, 12)
+                        .padding(.bottom, 7)
 
-                if let record = store.latestScan {
-                    latestReading(record)
-                }
-
-                VStack(alignment: .leading, spacing: 17) {
-                    HStack {
-                        Eyebrow(text: "Datos de transporte")
-                        Spacer(minLength: 4)
-                        Image(systemName: "lock")
+                    VStack(spacing: 7) {
+                        Text("Apoyá la SUBE")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(PulsoTheme.accent)
+                            .accessibilityAddTraits(.isHeader)
+                        Text(store.selectedMode.instruction)
+                            .font(.subheadline)
                             .foregroundStyle(PulsoTheme.secondary)
-                            .accessibilityHidden(true)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    UnavailableDataRow(title: "Saldo real", systemImage: "creditcard")
-                    Divider().overlay(PulsoTheme.line)
-                    UnavailableDataRow(title: "Último viaje", systemImage: "bus")
-                    Text("Estos datos no se pueden leer en esta versión sin acceso a la información protegida de SUBE.")
-                        .font(.footnote)
-                        .foregroundStyle(PulsoTheme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .pulsoSurface()
-
-                if !store.isNFCAvailable {
-                    InfoNotice(
-                        title: "NFC no disponible en este entorno",
-                        message: "La lectura requiere un iPhone físico con la app firmada y la capacidad NFC habilitada. El simulador permite recorrer la interfaz.",
-                        systemImage: "iphone.slash",
-                        tint: PulsoTheme.caution
-                    )
-                    .pulsoSurface()
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 20)
                 }
 
-                HStack(spacing: 7) {
-                    Image(systemName: "lock.shield")
-                    Text("Lectura local. Tu tarjeta queda intacta.")
+                sessionStatus
+
+                PrimaryScanButton(
+                    title: store.currentResult == nil ? "Iniciar lectura" : "Volver a leer",
+                    isDisabled: store.phase.isActive
+                ) {
+                    // Exactly one explicit gesture starts Apple's real reader.
+                    // No guide sheet, automatic scanning, or generated records.
+                    store.startScan()
                 }
-                .font(.caption)
-                .foregroundStyle(PulsoTheme.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, 12)
+                .accessibilityIdentifier("reader.scan")
+
+                unavailableNote
+                    .padding(.top, 16)
+                    .padding(.bottom, 16)
+
+                Text("Pulso · app independiente para SUBE")
+                    .font(.caption2)
+                    .foregroundStyle(PulsoTheme.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 15)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 22)
-            .padding(.bottom, 18)
         }
         .foregroundStyle(PulsoTheme.ink)
         .background(PulsoTheme.background)
-        .navigationTitle("")
+        .navigationTitle("Pulso")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(PulsoTheme.headerBlue, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                HStack(spacing: 8) {
-                    PulsoMark(size: 30)
-                    Text("pulso")
-                        .font(.system(.title3, design: .rounded, weight: .bold))
-                        .foregroundStyle(PulsoTheme.ink)
+                utilityMenu
+            }
+            .sharedBackgroundVisibility(.hidden)
+            ToolbarItem(placement: .principal) {
+                HStack(alignment: .firstTextBaseline, spacing: 7) {
+                    Text("Pulso")
+                        .font(.title3.weight(.semibold))
+                    Text("para SUBE")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
                 }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Pulso, lector NFC")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    HelpView()
-                } label: {
-                    Image(systemName: "questionmark")
-                }
-                .accessibilityLabel("Ayuda para leer tu tarjeta")
+                .foregroundStyle(.white)
+                .accessibilityElement(children: .combine)
             }
         }
-        .sheet(isPresented: $showingScanner) {
-            ScanGuideView()
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+        .sheet(item: $utilityRoute) { route in
+            UtilitySheet(route: route)
         }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center) {
-                Eyebrow(text: "Tu lector personal")
-                Spacer(minLength: 6)
-                StatusPill(
-                    text: "iOS 26+",
-                    systemImage: "iphone",
-                    tint: PulsoTheme.secondary
-                )
-            }
-            Text("Tu tarjeta,\nmás cerca.")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                .fixedSize(horizontal: false, vertical: true)
-            Text("Acercá tu SUBE y explorá lo que su chip permite leer.")
-                .font(.subheadline)
-                .foregroundStyle(PulsoTheme.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func latestReading(_ record: ScanRecord) -> some View {
-        VStack(alignment: .leading, spacing: 13) {
-            Eyebrow(text: "Última lectura NFC")
-            NavigationLink {
+        .sheet(item: $technicalRecord) { record in
+            NavigationStack {
                 ScanDetailView(record: record)
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "wave.3.right")
-                        .font(.title2)
-                        .foregroundStyle(PulsoTheme.accent)
-                        .frame(width: 48, height: 48)
-                        .background(PulsoTheme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 15))
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(record.family)
-                            .font(.headline)
-                            .foregroundStyle(PulsoTheme.ink)
-                        Text(record.scannedAt, format: .dateTime.day().month(.abbreviated).hour().minute())
-                            .font(.caption)
-                            .foregroundStyle(PulsoTheme.secondary)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Listo") { technicalRecord = nil }
+                        }
                     }
-                    Spacer(minLength: 4)
-                    Image(systemName: "arrow.up.right")
-                        .foregroundStyle(PulsoTheme.accent)
-                }
-                .pulsoSurface()
             }
-            .buttonStyle(.plain)
-            .accessibilityHint("Muestra los datos detectados. La fecha corresponde al escaneo, no a un viaje")
+        }
+    }
+
+    private var modePicker: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 14) {
+                    ForEach(ReaderMode.allCases) { mode in
+                        modeButton(mode, horizontal: true)
+                    }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 9) {
+                    ForEach(ReaderMode.allCases) { mode in
+                        modeButton(mode, horizontal: false)
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Operación con tu tarjeta")
+    }
+
+    private func modeButton(_ mode: ReaderMode, horizontal: Bool) -> some View {
+        ReaderModeButton(
+            mode: mode,
+            isSelected: store.selectedMode == mode,
+            isDisabled: store.phase.isActive,
+            horizontal: horizontal
+        ) {
+            store.selectMode(mode)
+        }
+    }
+
+    private var utilityMenu: some View {
+        Menu {
+            Button {
+                utilityRoute = .readings
+            } label: {
+                Label("Historial de lecturas NFC", systemImage: "wave.3.right")
+            }
+            .accessibilityIdentifier("menu.readings")
+
+            Button {
+                utilityRoute = .settings
+            } label: {
+                Label("Ajustes y privacidad", systemImage: "slider.horizontal.3")
+            }
+            .accessibilityIdentifier("menu.settings")
+
+            Button {
+                utilityRoute = .help
+            } label: {
+                Label("Ayuda", systemImage: "questionmark.circle")
+            }
+            .accessibilityIdentifier("menu.help")
+        } label: {
+            Image(systemName: "line.3.horizontal")
+                .font(.body.weight(.medium))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .tint(.white)
+        .disabled(store.phase.isActive)
+        .accessibilityLabel("Abrir menú")
+        .accessibilityIdentifier("menu.open")
+    }
+
+    private var unavailableNote: some View {
+        HStack(alignment: .top, spacing: 7) {
+            Image(systemName: "lock")
+                .font(.caption)
+                .padding(.top, 2)
+                .accessibilityHidden(true)
+            Text(modeAvailabilityNote)
+                .font(.footnote)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(PulsoTheme.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("reader.unavailable.note")
+    }
+
+    private var modeAvailabilityNote: String {
+        switch store.selectedMode {
+        case .balance:
+            "Podés intentar leer un chip compatible. El saldo real aún no está disponible."
+        case .trips:
+            "Podés intentar leer un chip compatible. El historial de viajes aún no está disponible."
+        case .topUp:
+            "Podés intentar leer un chip compatible. Todavía no acredita cargas ni modifica el saldo."
+        }
+    }
+
+    @ViewBuilder
+    private var sessionStatus: some View {
+        switch store.phase {
+        case .scanning, .connecting:
+            VStack(spacing: 12) {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(PulsoTheme.accent)
+                    Text(store.phase == .connecting ? "Conectando con la tarjeta…" : "Acercá una sola tarjeta…")
+                        .font(.subheadline)
+                }
+                Button("Cancelar lectura", role: .cancel) {
+                    store.cancelScan()
+                }
+                .frame(minHeight: 44)
+            }
+            .padding(.bottom, 16)
+        case .failed(let message):
+            InfoNotice(
+                title: "No se pudo completar la lectura",
+                message: message,
+                systemImage: "exclamationmark.circle",
+                tint: PulsoTheme.caution
+            )
+            .pulsoSurface(padding: 16)
+            .padding(.bottom, 16)
+        case .cancelled:
+            Text("Lectura cancelada. Podés volver a intentarlo.")
+                .font(.footnote)
+                .foregroundStyle(PulsoTheme.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 16)
+        case .idle, .completed:
+            EmptyView()
         }
     }
 }
 
-struct PhysicalCardView: View {
-    let record: ScanRecord?
-    @Environment(ReaderStore.self) private var store
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+private struct ReaderModeButton: View {
+    let mode: ReaderMode
+    let isSelected: Bool
+    let isDisabled: Bool
+    let horizontal: Bool
+    let action: @MainActor () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 7) {
-                    Text(record == nil ? "TU TARJETA FÍSICA" : "TARJETA DETECTADA")
-                        .font(.caption.weight(.semibold))
-                        .tracking(1.3)
-                        .foregroundStyle(PulsoTheme.mint.opacity(0.9))
-                    Text(record?.family ?? "Lista para acercar")
-                        .font(.system(.title2, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 12)
-                Image(systemName: "wave.3.right")
-                    .font(.system(size: 30, weight: .medium))
-                    .foregroundStyle(PulsoTheme.mint)
-                    .accessibilityHidden(true)
-            }
-
-            Spacer(minLength: dynamicTypeSize.isAccessibilitySize ? 0 : 10)
-
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(record == nil ? "Cerca. Simple. En tu iPhone." : "Identificador del chip")
-                        .font(.caption)
-                        .foregroundStyle(PulsoTheme.mint.opacity(0.8))
-                    if let record {
-                        Text(store.showFullIdentifier ? record.uidHex : record.maskedIdentifier)
-                            .font(.system(.subheadline, design: .monospaced, weight: .medium))
-                            .foregroundStyle(.white)
-                            .textSelection(.enabled)
-                    } else {
-                        Text("Lectura NFC")
-                            .font(.headline)
-                            .foregroundStyle(.white)
+        Button(action: action) {
+            Group {
+                if horizontal {
+                    HStack(spacing: 15) {
+                        modeIcon
+                        Text(mode.title)
+                            .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                } else {
+                    VStack(spacing: 10) {
+                        modeIcon
+                        Text(displayTitle)
+                            .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, minHeight: 42, alignment: .top)
                     }
                 }
-                Spacer(minLength: 8)
-                Image(systemName: record == nil ? "plus" : "checkmark")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(PulsoTheme.mint)
-                    .frame(width: 36, height: 36)
-                    .background(.white.opacity(0.08), in: Circle())
-                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(isSelected ? PulsoTheme.selectedText : PulsoTheme.secondary)
+            .frame(maxWidth: .infinity, alignment: .top)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        // Keep Button's native accessibility element and activation action.
+        // `children: .ignore` would replace it with an untyped synthetic element.
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(mode.title)
+        .accessibilityValue(isSelected ? "Seleccionado" : "No seleccionado")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier("mode.\(mode.rawValue)")
+    }
+
+    private var modeIcon: some View {
+        Image(systemName: mode.systemImage)
+            .font(.system(size: horizontal ? 23 : 28, weight: .regular))
+            .foregroundStyle(isSelected ? PulsoTheme.orange : PulsoTheme.idleRing)
+            .frame(width: horizontal ? 56 : 68, height: horizontal ? 56 : 68)
+            .background(isSelected ? PulsoTheme.selectionFill : PulsoTheme.surface, in: Circle())
+            .overlay {
+                Circle()
+                    .stroke(isSelected ? PulsoTheme.orange : PulsoTheme.idleRing, lineWidth: 3)
+            }
+            .accessibilityHidden(true)
+    }
+
+    private var displayTitle: String {
+        switch mode {
+        case .balance: "Consultar\nsaldo"
+        case .trips: "Historial"
+        case .topUp: "Acreditar\ncarga"
+        }
+    }
+}
+
+private struct OperationResultView: View {
+    let result: ModeScanResult
+    let showTechnicalDetails: @MainActor () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "lock.circle")
+                .font(.system(size: 68, weight: .ultraLight))
+                .foregroundStyle(PulsoTheme.accent)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 10) {
+                Text(result.mode.unavailableTitle)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(PulsoTheme.ink)
+                Text(result.mode.unavailableMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(PulsoTheme.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Label("El chip sí fue detectado", systemImage: "wave.3.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(PulsoTheme.accent)
+                Text(result.record.family)
+                    .font(.body.weight(.medium))
+                Text("Esto no verifica que la tarjeta sea SUBE ni habilita sus funciones protegidas.")
+                    .font(.footnote)
+                    .foregroundStyle(PulsoTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button(action: showTechnicalDetails) {
+                    HStack {
+                        Text("Ver datos del chip")
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(PulsoTheme.accent)
+            }
+            .pulsoSurface()
+        }
+    }
+}
+
+private enum UtilityRoute: String, Identifiable {
+    case readings, settings, help
+    var id: String { rawValue }
+}
+
+private struct UtilitySheet: View {
+    let route: UtilityRoute
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                switch route {
+                case .readings: HistoryView()
+                case .settings: SettingsView()
+                case .help: HelpView()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Listo") { dismiss() }
+                }
             }
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, minHeight: 210, alignment: .leading)
-        .background {
-            ZStack(alignment: .trailing) {
-                LinearGradient(
-                    colors: [PulsoTheme.deepGreen, Color(red: 0.08, green: 0.33, blue: 0.26)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                Circle()
-                    .stroke(PulsoTheme.mint.opacity(0.1), lineWidth: 32)
-                    .frame(width: 250, height: 250)
-                    .offset(x: 130, y: 82)
-                Circle()
-                    .stroke(PulsoTheme.mint.opacity(0.06), lineWidth: 1)
-                    .frame(width: 335, height: 335)
-                    .offset(x: 125, y: 82)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 28))
-        }
-        .shadow(color: PulsoTheme.deepGreen.opacity(0.13), radius: 16, y: 9)
-        .accessibilityElement(children: .combine)
     }
 }
 

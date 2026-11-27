@@ -15,9 +15,9 @@ struct SettingsView: View {
                 HStack(spacing: 14) {
                     PulsoMark(size: 54)
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("pulso")
+                        Text("Pulso")
                             .font(.system(.title2, design: .rounded, weight: .bold))
-                        Text("Tu lector NFC personal")
+                        Text("Lector NFC independiente para SUBE")
                             .font(.subheadline)
                             .foregroundStyle(PulsoTheme.secondary)
                     }
@@ -27,7 +27,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Guardar historial", isOn: Binding(
+                Toggle("Guardar lecturas NFC", isOn: Binding(
                     get: { store.keepHistory },
                     set: { newValue in
                         if !newValue, !store.scans.isEmpty {
@@ -41,7 +41,7 @@ struct SettingsView: View {
             } header: {
                 Text("Tus datos")
             } footer: {
-                Text("El historial guarda hasta 50 lecturas locales. Al desactivarlo se borran las guardadas. Mostrar el UID no lo incluye automáticamente en los archivos que compartís.")
+                Text("Este historial guarda hasta 50 lecturas del chip, no viajes. Al desactivarlo se borran las guardadas. Mostrar el UID no lo incluye automáticamente en los archivos que compartís.")
             }
             .listRowBackground(PulsoTheme.surface)
 

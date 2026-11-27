@@ -1,6 +1,16 @@
 # Estado de la entrega
 
-Actualizado el 27 de noviembre de 2026. App 0.1.0, build 1.
+Actualizado el 27 de noviembre de 2026.
+
+## Versión 0.2.0, build 2
+
+La nueva interfaz de tres modos incorpora pruebas nativas en iPhone 11 simulado con iOS 26. El flujo compila y publica el IPA después de las pruebas de dominio, y mantiene las pruebas de interfaz como requisito para que la ejecución completa termine correctamente.
+
+Las 13 pruebas de dominio pasaron. La app y el target de UI compilaron en Xcode 26.6. En la [ejecución #4](https://github.com/AnnonyA/Pulso/actions/runs/45974884336), los escenarios claro y oscuro pasaron y produjeron capturas reales en iPhone 11 con iOS 26.5; el entorno agotó su límite al cambiar la apariencia antes de texto grande. La ejecución #5 alcanzó las últimas comprobaciones del menú, pero excedió el presupuesto global de XCTest de 120 segundos. La siguiente ejecución amplía ese presupuesto a 240 segundos y conserva todas las comprobaciones. Todavía falta completar texto grande y verificar el IPA 0.2.0; no se considera aprobada toda la versión por esos resultados parciales.
+
+Las capturas reales y los resultados de XCTest estarán en el artifact `Pulso-iPhone11-UI-N`. Se probarán los tres modos, el regreso a saldo al relanzar, el error real de NFC en simulador, el tema oscuro y el texto de accesibilidad. El simulador no prueba el contacto con una SUBE física.
+
+## Registro histórico: versión 0.1.0, build 1
 
 ## Compilación nativa confirmada
 

@@ -40,12 +40,14 @@ def main() -> int:
     require('SWIFT_VERSION = 6.0;' in project, "Swift 6 language mode is required.")
     require('SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor' not in project, "Core NFC isolation is explicit; do not assume global MainActor.")
     require('TARGETED_DEVICE_FAMILY = 1;' in project, "Target must be iPhone.")
+    require('MARKETING_VERSION = 0.2.0;' in project and 'CURRENT_PROJECT_VERSION = 2;' in project, "Release must be version 0.2.0, build 2.")
     require('path = Sources/Pulso;' in project and 'PBXFileSystemSynchronizedRootGroup' in project, "Source membership must include the synchronized source tree.")
     scheme = ET.parse(ROOT / "Pulso.xcodeproj/xcshareddata/xcschemes/Pulso.xcscheme")
     references = scheme.findall(".//BuildableReference")
     require(bool(references), "Shared scheme contains no build target.")
     for reference in references:
         require(reference.get("BlueprintIdentifier") in project, "Shared scheme points to a missing target.")
+    require(any(reference.get("BlueprintName") == "PulsoUITests" for reference in scheme.findall(".//TestableReference/BuildableReference")), "Shared scheme must include native UI tests.")
 
     sources = list((ROOT / "Sources/Pulso").rglob("*.swift"))
     require(bool(sources), "Application Swift sources are missing.")
@@ -69,7 +71,7 @@ def main() -> int:
             if entry.get("filename"):
                 require((manifest.parent / entry["filename"]).is_file(), f"Missing asset from {manifest}")
 
-    for relative in [".github/workflows/ios.yml", "scripts/build_unsigned_ipa.sh", "scripts/verify_ipa.py", "Package.swift"]:
+    for relative in [".github/workflows/ios.yml", "scripts/build_unsigned_ipa.sh", "scripts/verify_ipa.py", "scripts/run_ui_tests.py", "Tests/PulsoUITests/PulsoUITests.swift", "Package.swift"]:
         require((ROOT / relative).is_file(), f"Required build file missing: {relative}")
     print(f"PASS: project configuration, NFC entitlement, privacy manifest, shared scheme, {len(sources)} Swift source files, and icon resources.")
     print("Not executed here: Swift type checking, iOS build, app launch, or physical NFC detection.")

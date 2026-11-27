@@ -2,7 +2,6 @@
 """Rebuild Pulso's original geometric app icons with Pillow. No remote assets."""
 from pathlib import Path
 import json
-import math
 
 from PIL import Image, ImageDraw
 
@@ -38,8 +37,8 @@ def make_icon(filename, background, foreground, ring):
 def main():
     icons = ASSETS / "AppIcon.appiconset"
     icons.mkdir(parents=True, exist_ok=True)
-    make_icon(icons / "AppIcon.png", "#102B28", "#B8F3D5", "#457C6C")
-    make_icon(icons / "AppIcon-dark.png", "#0A1917", "#B8F3D5", "#2D5A4B")
+    make_icon(icons / "AppIcon.png", "#007EAE", "#FFFFFF", "#77CCE7")
+    make_icon(icons / "AppIcon-dark.png", "#07314A", "#D7F3FF", "#34799B")
     make_icon(icons / "AppIcon-tinted.png", "#171717", "#E4E4E4", "#747474")
     entries = [{"filename": "AppIcon.png", "idiom": "universal", "platform": "ios", "size": "1024x1024"}]
     for appearance in ("dark", "tinted"):
@@ -48,7 +47,7 @@ def main():
     (ASSETS / "Contents.json").write_text(json.dumps({"info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
     accent = ASSETS / "AccentColor.colorset"
     accent.mkdir(exist_ok=True)
-    (accent / "Contents.json").write_text(json.dumps({"colors": [{"idiom": "universal", "color": {"color-space": "srgb", "components": {"alpha": "1.000", "red": "0.055", "green": "0.357", "blue": "0.286"}}}, {"idiom": "universal", "appearances": [{"appearance": "luminosity", "value": "dark"}], "color": {"color-space": "srgb", "components": {"alpha": "1.000", "red": "0.722", "green": "0.953", "blue": "0.835"}}}], "info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
+    (accent / "Contents.json").write_text(json.dumps({"colors": [{"idiom": "universal", "color": {"color-space": "srgb", "components": {"alpha": "1.000", "red": "0.000", "green": "0.494", "blue": "0.682"}}}, {"idiom": "universal", "appearances": [{"appearance": "luminosity", "value": "dark"}], "color": {"color-space": "srgb", "components": {"alpha": "1.000", "red": "0.514", "green": "0.839", "blue": "0.949"}}}], "info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
     print(f"Wrote 3 RGB app icons and asset catalog to {ASSETS}")
 
 
