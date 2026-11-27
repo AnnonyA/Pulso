@@ -4,6 +4,10 @@
 
 El proyecto usa Swift 6, SwiftUI y Core NFC. No requiere backend ni dependencias de terceros para compilar la app.
 
+[![Compilar IPA - iOS 26](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml/badge.svg)](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml)
+
+**Primera compilación confirmada:** [ejecución #1, completada correctamente](https://github.com/AnnonyA/Pulso/actions/runs/45969338666). [Descargar el artifact con `Pulso-unsigned.ipa`](https://github.com/AnnonyA/Pulso/actions/runs/45969338666/artifacts/15184396513). GitHub requiere iniciar sesión para descargar artifacts y los conserva durante el plazo configurado.
+
 ![Vista de diseño de Pulso](docs/design/Pulso-design-preview.png)
 
 La imagen es una **maqueta de diseño**, no una captura del simulador ni una lectura real. El código de la aplicación es SwiftUI nativo. También se incluye una vista de diseño en `docs/design/design-preview.html` para abrir en el navegador.
@@ -69,9 +73,9 @@ docs/BUILD.md            Guía para Windows y firma
 
 ## Estado de validación
 
-El entorno de creación es Linux y no tiene Xcode, SDK de Apple ni hardware NFC. Las comprobaciones locales del proyecto validan estructura, configuración, recursos y formatos. **No equivalen a una compilación de iOS ni a una prueba física.**
+El 27 de noviembre de 2026, GitHub Actions compiló correctamente la app con **Xcode 26.6 / SDK iOS 26.5**, ejecutó las **7 pruebas del modelo** y generó el IPA. El verificador confirmó un ejecutable Mach-O `arm64` para **iPhoneOS**, mínimo exacto **26.0**, íconos y manifiesto de privacidad. La descarga se verificó además mediante SHA-256.
 
-Una ejecución satisfactoria de Actions compilará la app, ejecutará las pruebas del modelo y verificará que el IPA contiene un ejecutable Mach-O `arm64` para **iPhoneOS**, con versión mínima **26.0**, íconos y manifiesto de privacidad. La detección real de tu SUBE se verifica después en tu iPhone 11.
+**Pendiente:** instalación, ejecución de la interfaz y prueba física de NFC con tu tarjeta en el iPhone 11. La compilación correcta no garantiza que Core NFC pueda detectar una SUBE de cualquier generación. El registro completo y los límites están en [docs/VALIDATION.md](docs/VALIDATION.md).
 
 ## Referencias
 
