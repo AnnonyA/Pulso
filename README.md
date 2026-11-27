@@ -6,6 +6,14 @@ El proyecto usa Swift 6, SwiftUI y Core NFC. No requiere backend ni dependencias
 
 [![Compilar IPA - iOS 26](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml/badge.svg)](https://github.com/AnnonyA/Pulso/actions/workflows/ios.yml)
 
+## Descargar Pulso 0.2.0
+
+El [artifact de la versión 0.2.0, build 2](https://github.com/AnnonyA/Pulso/actions/runs/45979462687/artifacts/15188069496) contiene **Pulso-unsigned.ipa** y las notas de instalación. Es una app arm64 compilada para iPhone, con **iOS 26.0 como mínimo**. No hace falta compilar en Windows.
+
+El IPA está **sin firmar**: para usar NFC, la firma y el perfil de instalación deben permitir la capacidad NFC TAG. El paquete no incluye certificados ni credenciales de Apple.
+
+**Esta versión detecta únicamente los metadatos públicos de tarjetas compatibles con Core NFC. No consulta el saldo real, no obtiene viajes protegidos y no acredita cargas.** Los tres modos explican estos límites; no hay resultados simulados. Ver [compatibilidad y alcance NFC](docs/NFC_COMPATIBILITY.md).
+
 ## Interfaz de tres modos — versión 0.2.0
 
 La pantalla principal sigue la referencia visual de SUBE: encabezado azul, tres selectores circulares, tarjeta junto al iPhone e indicación **Apoyá la SUBE**.
@@ -18,7 +26,17 @@ Los tres modos permiten iniciar una sesión NFC real para identificar una tarjet
 
 El menú reúne el registro local de **lecturas NFC**, los ajustes y la ayuda. Las lecturas guardadas están separadas del modo Historial de viajes.
 
-La documentación de [compatibilidad NFC](docs/NFC_COMPATIBILITY.md) detalla el alcance y los límites en iPhone. Las capturas de revisión de esta versión se generarán en el simulador de iPhone 11 mediante XCTest; no se reutiliza la maqueta de la versión anterior como prueba de ejecución.
+Las capturas de revisión se obtienen de la app nativa mediante XCTest en un simulador de iPhone 11. La [documentación de validación](docs/VALIDATION.md) distingue los resultados observados de lo que requiere probarse con una tarjeta física.
+
+### Capturas nativas en iPhone 11
+
+Estas imágenes provienen de la ejecución correcta #6, en un simulador **iPhone 11 con iOS 26.5**. Se copiaron los PNG originales de XCTest sin editar sus píxeles.
+
+| Consultar saldo — predeterminado | Historial | Acreditar carga |
+| --- | --- | --- |
+| ![Consultar saldo](docs/screenshots/consultar-saldo.png) | ![Historial](docs/screenshots/historial.png) | ![Acreditar carga](docs/screenshots/acreditar-carga.png) |
+
+También están las capturas de [modo oscuro](docs/screenshots/oscuro.png) y [texto de accesibilidad](docs/screenshots/texto-grande.png), junto con su [procedencia y huellas](docs/screenshots/provenance.json). A tamaños de accesibilidad, los modos pasan a una lista vertical y la pantalla se puede desplazar.
 
 ## Generar el `.ipa` desde Windows 10
 
@@ -82,7 +100,9 @@ docs/BUILD.md            Guía para Windows y firma
 
 ## Estado de validación
 
-La versión 0.1.0 se compiló correctamente en la [ejecución #1](https://github.com/AnnonyA/Pulso/actions/runs/45969338666). La versión 0.2.0 amplía las pruebas de modelos y agrega validación de interfaz con capturas en un simulador iPhone 11. Sus resultados se registran en [docs/VALIDATION.md](docs/VALIDATION.md) al terminar la ejecución correspondiente.
+La [ejecución #6](https://github.com/AnnonyA/Pulso/actions/runs/45979462687) terminó correctamente para **0.2.0, build 2**. Pasaron las **13 pruebas de dominio**, los **3 escenarios nativos de interfaz** en iPhone 11 —claro, oscuro y texto grande— y la verificación del IPA real: Mach-O arm64, plataforma iPhoneOS, mínimo iOS 26.0, recursos compilados y privacidad.
+
+El artifact [Pulso-iPhone11-UI-6](https://github.com/AnnonyA/Pulso/actions/runs/45979462687/artifacts/15189422262) contiene **11 capturas de 828 × 1792 píxeles**, resúmenes y resultados XCTest. [docs/VALIDATION.md](docs/VALIDATION.md) registra la procedencia del código y las huellas exactas del IPA y del paquete descargado.
 
 La compilación y el simulador no verifican la antena NFC ni garantizan que una SUBE de cualquier generación sea detectable. La instalación con firma válida y la lectura de tu tarjeta física siguen siendo comprobaciones independientes.
 

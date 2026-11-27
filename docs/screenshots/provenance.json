@@ -1,0 +1,84 @@
+{
+  "origin": "Original XCTest screenshots, copied without image editing",
+  "runURL": "https://github.com/AnnonyA/Pulso/actions/runs/45979462687",
+  "headCommit": "9a3592aeb4955377f7a62313e4835634e46d5871",
+  "sourceTree": "8abcf54d839b3ad048090274baae0b1163ebb0d6",
+  "artifactID": 15189422262,
+  "artifactSHA256": "8c7c664e572996a1d9ac50c659889a608e4914b74e5ea648baff58b4b9d63035",
+  "device": "iPhone 11 simulator",
+  "runtime": "iOS 26.5 (23F77)",
+  "physicalNFCTest": false,
+  "nativeScreenshotsInArtifact": 11,
+  "scenarios": [
+    {
+      "name": "light",
+      "status": "passed",
+      "screenshots": 6,
+      "contentSize": "large"
+    },
+    {
+      "name": "dark",
+      "status": "passed",
+      "screenshots": 2,
+      "contentSize": "large"
+    },
+    {
+      "name": "large-text",
+      "status": "passed",
+      "screenshots": 3,
+      "contentSize": "accessibility-extra-extra-extra-large"
+    }
+  ],
+  "selectedScreenshots": [
+    {
+      "file": "consultar-saldo.png",
+      "scenario": "light",
+      "sourceAttachment": "01-consultar-saldo-light_0_93CDA6B1-5463-4A15-9B97-2C5E3C7D4D09.png",
+      "sourceFile": "screenshots/light-01-01-consultar-saldo-light_0_93CDA6B1-5463-4A15-9B97-2C5E3C7D4D09.png.png",
+      "width": 828,
+      "height": 1792,
+      "bytes": 141689,
+      "sha256": "f0a022bf644899b5c881bf922d494c54016498108d584c9b405060d2dc2c5fea"
+    },
+    {
+      "file": "historial.png",
+      "scenario": "light",
+      "sourceAttachment": "02-historial-light_0_94F726E5-60A3-48E9-B1A1-BD273DF52B98.png",
+      "sourceFile": "screenshots/light-03-02-historial-light_0_94F726E5-60A3-48E9-B1A1-BD273DF52B98.png.png",
+      "width": 828,
+      "height": 1792,
+      "bytes": 139994,
+      "sha256": "9a4db1a7fe877b59b617f64125e2797891acd7fadca5cf18bee4c54e5d737c5f"
+    },
+    {
+      "file": "acreditar-carga.png",
+      "scenario": "light",
+      "sourceAttachment": "03-acreditar-carga-light_0_0C827AF4-0064-4D40-A2CE-A13FF706BD8B.png",
+      "sourceFile": "screenshots/light-04-03-acreditar-carga-light_0_0C827AF4-0064-4D40-A2CE-A13FF706BD8B.png.png",
+      "width": 828,
+      "height": 1792,
+      "bytes": 139677,
+      "sha256": "054106109f731ae117811cdde755b21546d5918c9b214d2d90a3547358a61e2d"
+    },
+    {
+      "file": "oscuro.png",
+      "scenario": "dark",
+      "sourceAttachment": "05-consultar-saldo-dark_0_6D5E558D-0FC4-4866-AE40-FF356B49FF2C.png",
+      "sourceFile": "screenshots/dark-02-05-consultar-saldo-dark_0_6D5E558D-0FC4-4866-AE40-FF356B49FF2C.png.png",
+      "width": 828,
+      "height": 1792,
+      "bytes": 145343,
+      "sha256": "3012d8a45cf2bc4893deddbe2083d66f27eaa56e03022a44a4104aaf2e76dece"
+    },
+    {
+      "file": "texto-grande.png",
+      "scenario": "large-text",
+      "sourceAttachment": "06-consultar-saldo-accessibility-large_0_8418944E-4DFD-4D80-BADB-D6FEF65F1270.png",
+      "sourceFile": "screenshots/large-text-02-06-consultar-saldo-accessibility-large_0_8418944E-4DFD-4D80-BADB-D6FEF65F1270.png.png",
+      "width": 828,
+      "height": 1792,
+      "bytes": 145467,
+      "sha256": "db6ab2415a20bac6e98e5c78c3accd755be44b704ceec7e933c94ff84507d614"
+    }
+  ]
+}
